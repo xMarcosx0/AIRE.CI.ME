@@ -65,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (userNameElement) {
       userNameElement.textContent = `${currentUser.nombre} ${currentUser.apellido || ""}`
     }
+    
 
     // Inicializar componentes
     initializeComponents()
@@ -77,6 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
     populatePRSTSelects()
     extractAvailableDates()
     populateDateSelectors()
+    
+    // Configurar botones de navegación
+    setupBackToDashboard();
 
     // Configurar eventos
     setupEventListeners()
@@ -154,13 +158,12 @@ function setupEventListeners() {
     }
 
     // 2. Mostrar perfil desde el navbar
-    const profileButton = document.getElementById("profile-button");
+    const profileButton = document.getElementById('profile-button');
     if (profileButton) {
-      profileButton.addEventListener("click", (e) => {
-        e.preventDefault();
-        console.log("Mostrando perfil");
-        showProfileModal();
-      });
+        profileButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            showProfileSection();
+        });
     }
 
     // 3. Cambiar contraseña - SOLO si el usuario es admin
@@ -1937,38 +1940,47 @@ function saveProjectStatus() {
   }
 }
 
-// Función para mostrar el modal de perfil
-function showProfileModal() {
-  console.log("Mostrando modal de perfil")
+// Función para mostrar el perfil como sección
+function showProfileSection() {
+  console.log("Mostrando sección de perfil");
+  
+  // Ocultar el tab content
+  document.querySelector('.tab-content').classList.add('d-none');
+  
+  // Mostrar la sección de perfil
+  const profileSection = document.getElementById('profile-section');
+  profileSection.classList.remove('d-none');
+  
+  // Llenar datos del perfil
+  document.getElementById('profile-nombre').textContent = currentUser.nombre || "No disponible";
+  document.getElementById('profile-apellido').textContent = currentUser.apellido || "No disponible";
+  document.getElementById('profile-usuario').textContent = currentUser.usuario || "No disponible";
+  document.getElementById('profile-correo').textContent = currentUser.correo || "No disponible";
+  document.getElementById('profile-rol').textContent = currentUser.rol || "No disponible";
+  
+  // Datos adicionales
+  document.getElementById('profile-last-login').textContent = currentUser.lastLogin ? 
+      formatDateTime(currentUser.lastLogin) : "No disponible";
+  
+  // Contar proyectos creados (solo para admin)
+  if (currentUser.rol === 'admin') {
+      const projects = Storage.getProjects();
+      const userProjects = projects.filter(p => p.creadorId === currentUser.id).length;
+      document.getElementById('profile-projects-created').textContent = userProjects;
+  } else {
+      document.querySelector('label[for="profile-projects-created"]').style.display = 'none';
+      document.getElementById('profile-projects-created').style.display = 'none';
+  }
+}
 
-  try {
-    const profileModal = document.getElementById("profileModal")
-    const profileNombre = document.getElementById("profile-nombre")
-    const profileApellido = document.getElementById("profile-apellido")
-    const profileUsuario = document.getElementById("profile-usuario")
-    const profileCorreo = document.getElementById("profile-correo")
-    const profileRol = document.getElementById("profile-rol")
-
-    if (!profileModal || !profileNombre || !profileApellido || !profileUsuario || !profileCorreo || !profileRol) {
-      console.error("Elementos del perfil no encontrados")
-      return
-    }
-
-    // Llenar datos del perfil
-    profileNombre.textContent = currentUser.nombre || "No disponible"
-    profileApellido.textContent = currentUser.apellido || "No disponible"
-    profileUsuario.textContent = currentUser.usuario || "No disponible"
-    profileCorreo.textContent = currentUser.correo || "No disponible"
-    profileRol.textContent = currentUser.rol || "No disponible"
-
-    // Mostrar modal
-    const modal = new bootstrap.Modal(profileModal)
-    modal.show()
-
-    console.log("Modal de perfil mostrado correctamente")
-  } catch (error) {
-    console.error("Error al mostrar modal de perfil:", error)
-    alert("Error al mostrar el perfil. Por favor, inténtelo de nuevo.")
+// Función para volver al dashboard
+function setupBackToDashboard() {
+  const backButton = document.getElementById('back-to-dashboard');
+  if (backButton) {
+      backButton.addEventListener('click', () => {
+          document.querySelector('.tab-content').classList.remove('d-none');
+          document.getElementById('profile-section').classList.add('d-none');
+      });
   }
 }
 
