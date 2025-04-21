@@ -1,4 +1,3 @@
-<!-- File: Public/admin.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -14,6 +13,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet.hexbin -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/d3-hexbin@0.2.2"></script>
+    <script src="https://unpkg.com/leaflet-d3@0.4.0"></script>
     <link href="css/admin.css" rel="stylesheet">
 </head>
 <body>
@@ -238,7 +242,11 @@
                                 <button class="btn btn-primary" id="filter-projects-button" data-bs-toggle="collapse" data-bs-target="#filters-collapse">
                                     <i class="fas fa-filter me-1"></i> Filtros
                                 </button>
+                                <button class="btn btn-outline-secondary ms-2" id="clear-highlight-button" style="display: none;">
+                                    <i class="fas fa-times me-1"></i> Limpiar selección
+                                </button>
                             </div>
+                            
                         </div>
 
                         <div class="collapse mb-3" id="filters-collapse">
@@ -312,6 +320,7 @@
                                 </form>
                             </div>
                         </div>
+                        
 
                         <div class="table-responsive">
                             <table class="table table-striped table-hover">
@@ -850,13 +859,14 @@
     </div>
 
     <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- leaflet -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.hexbin@1.0.0/leaflet-hexbin.min.js"></script>
-    <!-- Custom JS -->
-    <script src="Js/storage.js"></script>
-    <script src="Js/chart.js"></script>
-    <script src="Js/admin.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Leaflet JS para mapas -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.hexbin@1.0.0/leaflet-hexbin.min.js"></script>
+
+<!-- Tus scripts -->
+<script src="Js/storage.js"></script>
+<script src="Js/admin.js"></script>
 </body>
 </html>
