@@ -23,6 +23,31 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedPoste = null
   let allProjects = []
 
+  // Función para inicializar los mapas
+  function initMaps() {
+    try {
+      // Inicializar mapa principal
+      if (!map) {
+        map = L.map("map").setView([10.9878, -74.7889], 10) // Coordenadas de Barranquilla
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map)
+        console.log("Mapa principal inicializado correctamente")
+      }
+
+      // Inicializar mapa de censo
+      if (!mapCenso) {
+        mapCenso = L.map("mapCenso").setView([10.9878, -74.7889], 10)
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(mapCenso)
+        console.log("Mapa de censo inicializado correctamente")
+      }
+    } catch (error) {
+      console.error("Error al inicializar los mapas:", error)
+    }
+  }
+
   // Inicializar la interfaz
   initUI()
   loadProjects()
@@ -48,31 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Cargar información del perfil
     loadProfileInfo()
-  }
-
-  // Función para inicializar los mapas
-  function initMaps() {
-    try {
-      // Inicializar mapa principal
-      if (!map) {
-        map = L.map("map").setView([10.9878, -74.7889], 10) // Coordenadas de Barranquilla
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }).addTo(map)
-        console.log("Mapa principal inicializado correctamente")
-      }
-
-      // Inicializar mapa de censo
-      if (!mapCenso) {
-        mapCenso = L.map("mapCenso").setView([10.9878, -74.7889], 10)
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }).addTo(mapCenso)
-        console.log("Mapa de censo inicializado correctamente")
-      }
-    } catch (error) {
-      console.error("Error al inicializar los mapas:", error)
-    }
   }
 
   // Función para configurar los event listeners
@@ -375,30 +375,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Función para agregar un proyecto al mapa principal
   function addProjectToMap(project) {
     if (!project.kmlData || !project.kmlData.puntos || !map) return
-
+  
     try {
       // Obtener censos realizados para este proyecto
       const censos = Storage.getCensusByProject(project.id) || []
       const censadosIds = new Set(censos.map((c) => c.posteId))
-
+  
       // Agregar marcadores para cada punto (poste)
       project.kmlData.puntos.forEach((punto) => {
-        // Verificar si es un poste
-        if (
-          isPoste(punto.nombre) ||
-          isPoste(punto.descripcion) ||
-          /^p\d+$/i.test(punto.nombre) ||
-          /^poste\s*\d+$/i.test(punto.nombre) ||
-          /^\d+$/.test(punto.nombre)
-        ) {
-          // Determinar color del marcador según si está censado o no
-          const isCensado = censadosIds.has(punto.id)
-          const markerColor = isCensado ? "green" : "red"
-
-          // Crear icono personalizado como un pin/marcador en lugar de un punto
+        if (isPoste(punto.nombre) || isPoste(punto.descripcion) || 
+            /^p\d+$/i.test(punto.nombre) || /^poste\s*\d+$/i.test(punto.nombre) || 
+            /^\d+$/.test(punto.nombre)) {
+          
+          // Determinar si está censado y su estado
+          const censo = censos.find(c => c.posteId === punto.id)
+          const isCensado = censo !== undefined
+          const estado = censo?.estadoPoste || "pendiente"
+          
+          // Determinar color del marcador
+          let markerColor = "red" // Por defecto rojo (no censado)
+          if (isCensado) {
+            markerColor = estado === "bueno" ? "green" : "orange"
+          }
+  
+          // Crear icono personalizado consistente con mapCenso
           const icon = L.divIcon({
             className: "custom-div-icon",
             html: `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5); position: relative;">
@@ -408,33 +410,42 @@ document.addEventListener("DOMContentLoaded", () => {
             iconAnchor: [10, 28],
             popupAnchor: [0, -28],
           })
-
+  
           // Crear marcador
-          const marker = L.marker([punto.lat, punto.lng], { icon: icon })
-
+          const marker = L.marker([punto.lat, punto.lng], { 
+            icon: icon,
+            posteData: {
+              id: punto.id,
+              nombre: punto.nombre || `Poste ${punto.id}`,
+              descripcion: punto.descripcion || "",
+              lat: punto.lat,
+              lng: punto.lng,
+              isCensado: isCensado,
+              estado: estado,
+              projectId: project.id,
+            }
+          })
+  
           // Agregar popup con información
-          marker.bindPopup(`
-            <h5>Poste: ${punto.nombre || "Sin nombre"}</h5>
-            <p>${punto.descripcion || "Sin descripción"}</p>
-            <p><strong>Estado:</strong> ${isCensado ? "Censado" : "Pendiente"}</p>
-            <p><strong>Proyecto:</strong> ${project.prstNombre || "Sin nombre"}</p>
-          `)
-
+          let popupContent = `<h5>Poste: ${punto.nombre || "Sin nombre"}</h5>`
+          popupContent += `<p>${punto.descripcion || "Sin descripción"}</p>`
+          
+          if (isCensado) {
+            popupContent += `<p><strong>Estado:</strong> ${estado === "bueno" ? "Buen estado" : "Requiere revisión"}</p>`
+            popupContent += `<p><strong>Fecha censo:</strong> ${new Date(censo.fechaCenso).toLocaleDateString()}</p>`
+          } else {
+            popupContent += `<p><strong>Estado:</strong> Pendiente de censo</p>`
+          }
+          
+          popupContent += `<p><strong>Proyecto:</strong> ${project.prstNombre || "Sin nombre"}</p>`
+          
+          marker.bindPopup(popupContent)
+  
           // Agregar marcador al mapa y al array de marcadores
           marker.addTo(map)
           markers.push(marker)
         }
       })
-
-      // Agregar líneas para las rutas si existen
-      if (project.kmlData.rutas) {
-        project.kmlData.rutas.forEach((ruta) => {
-          const points = ruta.puntos.map((p) => [p.lat, p.lng])
-          const polyline = L.polyline(points, { color: "blue", weight: 3, opacity: 0.7 })
-          polyline.addTo(map)
-          polylines.push(polyline)
-        })
-      }
     } catch (error) {
       console.error("Error al agregar proyecto al mapa:", error)
     }
@@ -512,6 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Función para cargar el mapa de censo con los datos del proyecto
+  // Modificar la función loadCensoMap para mejorar la visualización de los postes
   function loadCensoMap(project) {
     // Limpiar mapa anterior
     clearCensoMap()
@@ -545,8 +557,8 @@ document.addEventListener("DOMContentLoaded", () => {
           const icon = L.divIcon({
             className: "custom-div-icon",
             html: `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5); position: relative;">
-                  <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background-color: ${markerColor};</div>
-                </div>`,
+                <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background-color: ${markerColor};</div>
+              </div>`,
             iconSize: [20, 28],
             iconAnchor: [10, 28],
             popupAnchor: [0, -28],
@@ -572,11 +584,45 @@ document.addEventListener("DOMContentLoaded", () => {
           })
 
           // Agregar popup con información
-          marker.bindPopup(`
-          <h5>Poste: ${punto.nombre || "Sin nombre"}</h5>
-          <p>${punto.descripcion || "Sin descripción"}</p>
-          <p><strong>Estado:</strong> ${isCensado ? "Censado" : "Pendiente"}</p>
-        `)
+          if (isCensado) {
+            marker.bindPopup(`
+            <h5>Poste: ${punto.nombre || "Sin nombre"}</h5>
+            <p>${punto.descripcion || "Sin descripción"}</p>
+            <p><strong>Estado:</strong> Censado</p>
+            <button class="btn btn-sm btn-info mt-2 btn-ver-detalle">Ver Detalles</button>
+          `)
+
+            // Agregar evento para ver detalles
+            marker.on("popupopen", () => {
+              const btnVerDetalle = document.querySelector(".btn-ver-detalle")
+              if (btnVerDetalle) {
+                btnVerDetalle.addEventListener("click", () => {
+                  showCensoDetail(project.id, punto.id)
+                  // Cerrar el popup
+                  marker.closePopup()
+                })
+              }
+            })
+          } else {
+            marker.bindPopup(`
+            <h5>Poste: ${punto.nombre || "Sin nombre"}</h5>
+            <p>${punto.descripcion || "Sin descripción"}</p>
+            <p><strong>Estado:</strong> Pendiente</p>
+            <button class="btn btn-sm btn-primary mt-2 btn-iniciar-censo">Iniciar Censo</button>
+          `)
+
+            // Agregar evento para iniciar censo
+            marker.on("popupopen", () => {
+              const btnIniciarCenso = document.querySelector(".btn-iniciar-censo")
+              if (btnIniciarCenso) {
+                btnIniciarCenso.addEventListener("click", () => {
+                  onPosteClick(marker)
+                  // Cerrar el popup
+                  marker.closePopup()
+                })
+              }
+            })
+          }
 
           // Agregar marcador al mapa y al array de marcadores
           marker.addTo(mapCenso)
@@ -606,6 +652,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Función para manejar el clic en un poste
+  // Modificar la función onPosteClick para manejar mejor los postes ya censados
   function onPosteClick(marker) {
     const posteData = marker.posteData
 
@@ -1033,319 +1080,465 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Función para guardar el censo
   // Modificar la función saveCenso para corregir la subida de imágenes y agregar validación de campos adicionales
-  function saveCenso() {
-    // Resetear mensajes de error
-    document.querySelectorAll(".is-invalid").forEach((el) => {
-      el.classList.remove("is-invalid")
-    })
-    document.querySelectorAll(".invalid-feedback").forEach((el) => {
-      el.style.display = "none"
-    })
+ // Función para guardar el censo
+function saveCenso() {
+  // Resetear mensajes de error
+  document.querySelectorAll(".is-invalid").forEach((el) => {
+      el.classList.remove("is-invalid");
+  });
+  document.querySelectorAll(".invalid-feedback").forEach((el) => {
+      el.style.display = "none";
+  });
 
-    // Validar campos obligatorios
-    let isValid = true
+  // Validar campos obligatorios
+  let isValid = true;
 
-    // Validar campos de características del poste
-    const requiredFields = ["tipoPoste", "materialPoste", "alturaPoste", "cantidadPRST"]
+  // Validar campos de características del poste
+  const requiredFields = ["tipoPoste", "materialPoste", "alturaPoste", "cantidadPRST"];
 
-    requiredFields.forEach((fieldId) => {
-      const field = document.getElementById(fieldId)
+  requiredFields.forEach((fieldId) => {
+      const field = document.getElementById(fieldId);
       if (!field || field.value === "") {
-        field.classList.add("is-invalid")
-        const feedback = field.nextElementSibling
-        if (feedback && feedback.classList.contains("invalid-feedback")) {
-          feedback.style.display = "block"
-        }
-        isValid = false
+          field.classList.add("is-invalid");
+          const feedback = field.nextElementSibling;
+          if (feedback && feedback.classList.contains("invalid-feedback")) {
+              feedback.style.display = "block";
+          }
+          isValid = false;
       }
-    })
+  });
 
-    // Validar elementos existentes
-    const elementoNA = document.getElementById("elementoNA")
-    const elementosCheckboxes = document.querySelectorAll("#elementosCheckboxes .elemento-checkbox:checked")
+  // Validar elementos existentes
+  const elementoNA = document.getElementById("elementoNA");
+  const elementosCheckboxes = document.querySelectorAll("#elementosCheckboxes .elemento-checkbox:checked");
 
-    if (!elementoNA.checked && elementosCheckboxes.length === 0) {
-      document.getElementById("elementosError").classList.remove("d-none")
-      isValid = false
-    } else {
-      document.getElementById("elementosError").classList.add("d-none")
-    }
+  if (!elementoNA.checked && elementosCheckboxes.length === 0) {
+      document.getElementById("elementosError").classList.remove("d-none");
+      isValid = false;
+  } else {
+      document.getElementById("elementosError").classList.add("d-none");
+  }
 
-    // Validar fotos
-    const fotoFields = ["fotoPanoramica", "fotoDetallada", "fotoPlaca"]
-    fotoFields.forEach((fieldId) => {
-      const fileInput = document.getElementById(fieldId)
+  // Validar fotos
+  const fotoFields = ["fotoPanoramica", "fotoDetallada", "fotoPlaca"];
+  fotoFields.forEach((fieldId) => {
+      const fileInput = document.getElementById(fieldId);
       if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        const container = fileInput.closest(".foto-container")
-        if (container) {
-          container.classList.add("is-invalid")
-          const feedback = container.querySelector(".invalid-feedback")
-          if (feedback) feedback.style.display = "block"
-        }
-        isValid = false
+          const container = fileInput.closest(".foto-container");
+          if (container) {
+              container.classList.add("is-invalid");
+              const feedback = container.querySelector(".invalid-feedback");
+              if (feedback) feedback.style.display = "block";
+          }
+          isValid = false;
       } else {
-        const container = fileInput.closest(".foto-container")
-        if (container) {
-          container.classList.remove("is-invalid")
-        }
+          const container = fileInput.closest(".foto-container");
+          if (container) {
+              container.classList.remove("is-invalid");
+          }
       }
-    })
+  });
 
-    // Validar PRST si cantidad > 0
-    const cantidadPRST = Number.parseInt(document.getElementById("cantidadPRST").value)
-    if (cantidadPRST > 0) {
-      const prstForms = document.querySelectorAll(".prst-form")
+  // Validar PRST si cantidad > 0
+  const cantidadPRST = Number.parseInt(document.getElementById("cantidadPRST").value);
+  if (cantidadPRST > 0) {
+      const prstForms = document.querySelectorAll(".prst-form");
       prstForms.forEach((form) => {
-        const nombre = form.querySelector(".prst-nombre")
-        const cables = form.querySelector(".prst-cantidad-cables")
-        // Validar campos adicionales obligatorios
-        const cajaEmpalme = form.querySelector(".prst-caja-empaque")
-        const reserva = form.querySelector(".prst-reserva")
-        const nap = form.querySelector(".prst-nap")
-        const spt = form.querySelector(".prst-spt")
-        const bajante = form.querySelector(".prst-bajante")
+          const nombre = form.querySelector(".prst-nombre");
+          const cables = form.querySelector(".prst-cantidad-cables");
+          // Validar campos adicionales obligatorios
+          const cajaEmpalme = form.querySelector(".prst-caja-empaque");
+          const reserva = form.querySelector(".prst-reserva");
+          const nap = form.querySelector(".prst-nap");
+          const spt = form.querySelector(".prst-spt");
+          const bajante = form.querySelector(".prst-bajante");
 
-        if (!nombre || !nombre.value) {
-          nombre.classList.add("is-invalid")
-          isValid = false
-        } else {
-          nombre.classList.remove("is-invalid")
-        }
+          if (!nombre || !nombre.value) {
+              nombre.classList.add("is-invalid");
+              isValid = false;
+          } else {
+              nombre.classList.remove("is-invalid");
+          }
 
-        if (!cables || !cables.value) {
-          cables.classList.add("is-invalid")
-          isValid = false
-        } else {
-          cables.classList.remove("is-invalid")
-        }
+          if (!cables || !cables.value) {
+              cables.classList.add("is-invalid");
+              isValid = false;
+          } else {
+              cables.classList.remove("is-invalid");
+          }
 
-        // Validar campos adicionales
-        if (!cajaEmpalme || cajaEmpalme.value === "") {
-          cajaEmpalme.classList.add("is-invalid")
-          isValid = false
-        } else {
-          cajaEmpalme.classList.remove("is-invalid")
-        }
+          // Validar campos adicionales
+          if (!cajaEmpalme || cajaEmpalme.value === "") {
+              cajaEmpalme.classList.add("is-invalid");
+              isValid = false;
+          } else {
+              cajaEmpalme.classList.remove("is-invalid");
+          }
 
-        if (!reserva || reserva.value === "") {
-          reserva.classList.add("is-invalid")
-          isValid = false
-        } else {
-          reserva.classList.remove("is-invalid")
-        }
+          if (!reserva || reserva.value === "") {
+              reserva.classList.add("is-invalid");
+              isValid = false;
+          } else {
+              reserva.classList.remove("is-invalid");
+          }
 
-        if (!nap || nap.value === "") {
-          nap.classList.add("is-invalid")
-          isValid = false
-        } else {
-          nap.classList.remove("is-invalid")
-        }
+          if (!nap || nap.value === "") {
+              nap.classList.add("is-invalid");
+              isValid = false;
+          } else {
+              nap.classList.remove("is-invalid");
+          }
 
-        if (!spt || spt.value === "") {
-          spt.classList.add("is-invalid")
-          isValid = false
-        } else {
-          spt.classList.remove("is-invalid")
-        }
+          if (!spt || spt.value === "") {
+              spt.classList.add("is-invalid");
+              isValid = false;
+          } else {
+              spt.classList.remove("is-invalid");
+          }
 
-        if (!bajante || bajante.value === "") {
-          bajante.classList.add("is-invalid")
-          isValid = false
-        } else {
-          bajante.classList.remove("is-invalid")
-        }
-      })
-    }
+          if (!bajante || bajante.value === "") {
+              bajante.classList.add("is-invalid");
+              isValid = false;
+          } else {
+              bajante.classList.remove("is-invalid");
+          }
+      });
+  }
 
-    if (!isValid) {
-      showToast("Complete todos los campos obligatorios", "danger")
-      return
-    }
+  if (!isValid) {
+      showToast("Complete todos los campos obligatorios", "danger");
+      return;
+  }
 
-    // Procesar fotos como base64
-    const processPhoto = (fileInput) => {
+  // Procesar fotos como base64
+  const processPhoto = (fileInput) => {
       return new Promise((resolve) => {
-        if (fileInput.files && fileInput.files[0]) {
-          const reader = new FileReader()
-          reader.onload = (e) => resolve(e.target.result)
-          reader.readAsDataURL(fileInput.files[0])
-        } else {
-          resolve(null)
-        }
-      })
-    }
+          if (fileInput.files && fileInput.files[0]) {
+              const reader = new FileReader();
+              reader.onload = (e) => resolve(e.target.result);
+              reader.readAsDataURL(fileInput.files[0]);
+          } else {
+              resolve(null);
+          }
+      });
+  };
 
-    // Esperar a que todas las fotos se procesen
-    Promise.all([
+  // Esperar a que todas las fotos se procesen
+  Promise.all([
       processPhoto(document.getElementById("fotoPanoramica")),
       processPhoto(document.getElementById("fotoDetallada")),
       processPhoto(document.getElementById("fotoPlaca")),
-    ])
+  ])
       .then(([fotoPanoramica, fotoDetallada, fotoPlaca]) => {
-        // Crear objeto de censo
-        const censoData = {
-          id: Date.now().toString(),
-          projectId: document.getElementById("projectId").value,
-          posteId: document.getElementById("posteId").value,
-          posteNombre: document.getElementById("numeroPoste").value,
-          posteLat: document.getElementById("posteLat").value,
-          posteLng: document.getElementById("posteLng").value,
-          fechaCenso: document.getElementById("fechaCenso").value,
-          numeroPoste: document.getElementById("numeroPoste").value,
-          coordenadas: document.getElementById("coordenadas").value,
-          prstSolicitante: document.getElementById("prstSolicitante").value,
-          tipoPoste: document.getElementById("tipoPoste").value,
-          materialPoste: document.getElementById("materialPoste").value,
-          alturaPoste: document.getElementById("alturaPoste").value,
-          cantidadPRST: cantidadPRST,
-          elementos: getSelectedElementos(),
-          prst: getPRSTData(),
-          fotos: {
-            panoramica: fotoPanoramica,
-            detallada: fotoDetallada,
-            placa: fotoPlaca,
-          },
-          observaciones: document.getElementById("observacionesPoste").value,
-          fechaRegistro: new Date().toISOString(),
-          censadoPor: {
-            id: loggedUser.id,
-            nombre: loggedUser.nombre,
-            apellido: loggedUser.apellido,
-          },
-          estado: "pendiente",
-          revision: {
-            requiereRevision: false,
-            observaciones: "",
-          },
-        }
+          // Crear objeto de censo
+          const censoData = {
+              id: Date.now().toString(),
+              projectId: document.getElementById("projectId").value,
+              posteId: document.getElementById("posteId").value,
+              posteNombre: document.getElementById("numeroPoste").value,
+              posteLat: document.getElementById("posteLat").value,
+              posteLng: document.getElementById("posteLng").value,
+              fechaCenso: document.getElementById("fechaCenso").value,
+              numeroPoste: document.getElementById("numeroPoste").value,
+              coordenadas: document.getElementById("coordenadas").value,
+              prstSolicitante: document.getElementById("prstSolicitante").value,
+              tipoPoste: document.getElementById("tipoPoste").value,
+              materialPoste: document.getElementById("materialPoste").value,
+              alturaPoste: document.getElementById("alturaPoste").value,
+              cantidadPRST: cantidadPRST,
+              elementos: getSelectedElementos(),
+              prst: getPRSTData(),
+              fotos: {
+                  panoramica: fotoPanoramica,
+                  detallada: fotoDetallada,
+                  placa: fotoPlaca,
+              },
+              observaciones: document.getElementById("observacionesPoste").value,
+              fechaRegistro: new Date().toISOString(),
+              censadoPor: {
+                  id: loggedUser.id,
+                  nombre: loggedUser.nombre,
+                  apellido: loggedUser.apellido,
+              },
+              estado: "pendiente",
+              revision: {
+                  requiereRevision: false,
+                  observaciones: "",
+              },
+          };
 
-        // Mostrar modal para preguntar sobre el estado del poste
-        mostrarModalEstadoPoste(censoData)
+          // Mostrar modal para preguntar sobre el estado del poste
+          mostrarModalEstadoPoste(censoData);
       })
       .catch((error) => {
-        console.error("Error al procesar fotos:", error)
-        showToast("Error al procesar las fotografías", "danger")
-      })
-  }
+          console.error("Error al procesar fotos:", error);
+          showToast("Error al procesar las fotografías", "danger");
+      });
+}
 
-  // Función para mostrar modal preguntando por el estado del poste
-  function mostrarModalEstadoPoste(censoData) {
-    // Crear modal dinámicamente
-    const modalHtml = `
-    <div class="modal fade" id="modalEstadoPoste" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Estado del Poste</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <p>¿El poste ${censoData.numeroPoste} se encuentra en buen estado y cumple con todas las normativas técnicas requeridas?</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-danger" id="btnMalEstado">No, presenta problemas</button>
-            <button type="button" class="btn btn-success" id="btnBuenEstado">Sí, está en buen estado</button>
-          </div>
+// Función para mostrar modal preguntando por el estado del poste
+function mostrarModalEstadoPoste(censoData) {
+  // Crear modal dinámicamente
+  const modalHtml = `
+  <div class="modal fade" id="modalEstadoPoste" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Estado del Poste</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>¿El poste ${censoData.numeroPoste} se encuentra en buen estado y cumple con todas las normativas técnicas requeridas?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" id="btnMalEstado">No, presenta problemas</button>
+          <button type="button" class="btn btn-success" id="btnBuenEstado">Sí, está en buen estado</button>
         </div>
       </div>
     </div>
-  `
+  </div>
+`;
 
-    // Agregar modal al DOM
-    document.body.insertAdjacentHTML("beforeend", modalHtml)
+  // Agregar modal al DOM
+  document.body.insertAdjacentHTML("beforeend", modalHtml);
 
-    // Obtener referencia al modal
-    const modalElement = document.getElementById("modalEstadoPoste")
-    const modal = new bootstrap.Modal(modalElement)
+  // Obtener referencia al modal
+  const modalElement = document.getElementById("modalEstadoPoste");
+  const modal = new bootstrap.Modal(modalElement);
 
-    // Mostrar modal
-    modal.show()
+  // Mostrar modal
+  modal.show();
 
-    // Manejar respuesta "Buen estado"
-    document.getElementById("btnBuenEstado").addEventListener("click", () => {
-      censoData.estadoPoste = "bueno"
-      finalizarGuardadoCenso(censoData, false)
-      modal.hide()
-      // Eliminar modal del DOM después de ocultarlo
-      modalElement.addEventListener("hidden.bs.modal", () => {
-        modalElement.remove()
-      })
-    })
+  // Manejar respuesta "Buen estado"
+  document.getElementById("btnBuenEstado").addEventListener("click", () => {
+      censoData.estadoPoste = "bueno";
+      finalizarGuardadoCenso(censoData, false);
+      modal.hide();
+      modalElement.remove();
+  });
 
-    // Manejar respuesta "Mal estado"
-    document.getElementById("btnMalEstado").addEventListener("click", () => {
-      censoData.estadoPoste = "malo"
-      finalizarGuardadoCenso(censoData, true)
-      modal.hide()
-      // Eliminar modal del DOM después de ocultarlo
-      modalElement.addEventListener("hidden.bs.modal", () => {
-        modalElement.remove()
-      })
-    })
-  }
+  // Manejar respuesta "Mal estado"
+  document.getElementById("btnMalEstado").addEventListener("click", () => {
+      censoData.estadoPoste = "malo";
+      finalizarGuardadoCenso(censoData, true);
+      modal.hide();
+      modalElement.remove();
+  });
+}
 
-  // Función para finalizar el guardado del censo después de determinar el estado del poste
-  function finalizarGuardadoCenso(censoData, requiereObservacion) {
-    // Guardar en localStorage
-    const censos = JSON.parse(localStorage.getItem(Storage.KEYS.CENSUS) || "[]")
-    censos.push(censoData)
-    localStorage.setItem(Storage.KEYS.CENSUS, JSON.stringify(censos))
-
-    // Actualizar estado del proyecto
-    const project = Storage.getProjectById(censoData.projectId)
-    if (project) {
-      // Si requiere observación, cambiar estado a "Gestionado por Brigada con Observación"
-      if (requiereObservacion) {
-        project.estado = "Documentación Errada"
-      } else {
-        // Verificar si todos los postes están en buen estado
-        const todosPostesBuenEstado = verificarTodosPostesBuenEstado(project.id)
-
-        // Si todos los postes están en buen estado, cambiar a "Gestionado por Brigada"
-        // Si no, mantener el estado actual
-        if (todosPostesBuenEstado) {
-          project.estado = "En Gestion por Brigada"
-        }
+function finalizarGuardadoCenso(censoData, requiereObservacion) {
+  try {
+      console.log("Intentando guardar censo:", censoData); // Para depuración
+      
+      // 1. Obtener censos existentes
+      let censos = [];
+      try {
+          const censosGuardados = localStorage.getItem(Storage.KEYS.CENSUS);
+          if (censosGuardados) {
+              censos = JSON.parse(censosGuardados);
+              if (!Array.isArray(censos)) {
+                  console.warn("Los datos de censo no eran un array, inicializando nuevo array");
+                  censos = [];
+              }
+          }
+      } catch (e) {
+          console.error("Error al leer censos existentes:", e);
+          censos = [];
       }
 
-      Storage.saveProject(project)
-    }
+      // 2. Agregar nuevo censo
+      censos.push(censoData);
+      
+      // 3. Guardar en localStorage
+      localStorage.setItem(Storage.KEYS.CENSUS, JSON.stringify(censos));
+      console.log("Censo guardado exitosamente en localStorage");
 
-    // Crear notificación
-    Storage.createNotification({
-      usuarioId: loggedUser.id,
-      tipo: "censo_completado",
-      mensaje: `Censo completado para poste ${censoData.numeroPoste} (Proyecto: ${project?.prstNombre || "Sin nombre"})`,
-      fechaCreacion: new Date().toISOString(),
-      leido: false,
-      metadata: {
-        proyectoId: censoData.projectId,
-        posteId: censoData.posteId,
-        censoId: censoData.id,
-      },
-    })
+      // 4. Actualizar marcadores
+      updateMarkerColor(censoData.posteId, censoData.estadoPoste === 'bueno' ? 'green' : 'orange');
 
-    // Mostrar mensaje de éxito
-    showToast("Censo guardado correctamente", "success")
+      // 5. Actualizar estado del proyecto
+      const project = Storage.getProjectById(censoData.projectId);
+      if (project) {
+          console.log("Actualizando estado del proyecto:", project.id);
+          if (requiereObservacion) {
+              project.estado = "Documentación Errada";
+          } else {
+              const todosPostesBuenEstado = verificarTodosPostesBuenEstado(project.id);
+              if (todosPostesBuenEstado) {
+                  project.estado = "En Gestion por Brigada";
+              }
+          }
+          Storage.saveProject(project);
+      }
 
-    // Actualizar interfaz
-    updateMapAfterCenso(censoData)
-    hideCensoForm()
-    checkProjectCompletion()
+      // 6. Crear notificación
+      Storage.createNotification({
+          usuarioId: loggedUser.id,
+          tipo: "censo_completado",
+          mensaje: `Censo completado para poste ${censoData.numeroPoste}`,
+          fechaCreacion: new Date().toISOString(),
+          leido: false,
+          metadata: {
+              proyectoId: censoData.projectId,
+              posteId: censoData.posteId,
+              censoId: censoData.id,
+          },
+      });
+
+      showToast("Censo guardado correctamente", "success");
+      hideCensoForm();
+      checkProjectCompletion();
+  } catch (error) {
+      console.error("Error completo al guardar el censo:", error);
+      showToast(`Error al guardar el censo: ${error.message}`, "danger");
+  } finally {
+      loadProjects();
   }
+}
+
+function updateMarkerColor(posteId, color) {
+  if (!posteId || !color) {
+      console.error("Faltan parámetros en updateMarkerColor:", {posteId, color});
+      return;
+  }
+
+  console.log(`Actualizando marcador ${posteId} a color ${color}`);
+  
+  // Buscar marcador en mapa de censo
+  const censoMarker = censoMarkers.find(m => m.posteData && m.posteData.id === posteId);
+  if (censoMarker) {
+      const icon = L.divIcon({
+          className: "custom-div-icon",
+          html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5); position: relative;">
+              <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background-color: ${color};"></div>
+          </div>`,
+          iconSize: [20, 28],
+          iconAnchor: [10, 28],
+          popupAnchor: [0, -28],
+      });
+      
+      censoMarker.setIcon(icon);
+      censoMarker.posteData.isCensado = true;
+      censoMarker.posteData.estado = color === 'green' ? 'bueno' : 'malo';
+      
+      censoMarker.bindPopup(`
+          <h5>Poste: ${censoMarker.posteData.nombre || 'Sin nombre'}</h5>
+          <p>${censoMarker.posteData.descripcion || "Sin descripción"}</p>
+          <p><strong>Estado:</strong> ${color === 'green' ? 'Buen estado' : 'Requiere revisión'}</p>
+          <button class="btn btn-sm btn-info mt-2 btn-ver-detalle">Ver Detalles</button>
+      `);
+  } else {
+      console.warn("No se encontró marcador de censo para actualizar:", posteId);
+  }
+
+  // Buscar marcador en mapa principal
+  const mainMarker = markers.find(m => m.posteData && m.posteData.id === posteId);
+  if (mainMarker) {
+      const icon = L.divIcon({
+          className: "custom-div-icon",
+          html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5); position: relative;">
+              <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background-color: ${color};"></div>
+          </div>`,
+          iconSize: [20, 28],
+          iconAnchor: [10, 28],
+          popupAnchor: [0, -28],
+      });
+      
+      mainMarker.setIcon(icon);
+      mainMarker.posteData.isCensado = true;
+      mainMarker.posteData.estado = color === 'green' ? 'bueno' : 'malo';
+      
+      mainMarker.bindPopup(`
+          <h5>Poste: ${mainMarker.posteData.nombre || 'Sin nombre'}</h5>
+          <p>${mainMarker.posteData.descripcion || "Sin descripción"}</p>
+          <p><strong>Estado:</strong> ${color === 'green' ? 'Buen estado' : 'Requiere revisión'}</p>
+          <button class="btn btn-sm btn-info mt-2 btn-ver-detalle">Ver Detalles</button>
+      `);
+  }
+}
+function finalizarGuardadoCenso(censoData, requiereObservacion) {
+  try {
+      console.log("Intentando guardar censo:", censoData); // Para depuración
+      
+      // 1. Obtener censos existentes
+      let censos = [];
+      try {
+          const censosGuardados = localStorage.getItem(Storage.KEYS.CENSUS);
+          if (censosGuardados) {
+              censos = JSON.parse(censosGuardados);
+              if (!Array.isArray(censos)) {
+                  console.warn("Los datos de censo no eran un array, inicializando nuevo array");
+                  censos = [];
+              }
+          }
+      } catch (e) {
+          console.error("Error al leer censos existentes:", e);
+          censos = [];
+      }
+
+      // 2. Agregar nuevo censo
+      censos.push(censoData);
+      
+      // 3. Guardar en localStorage
+      localStorage.setItem(Storage.KEYS.CENSUS, JSON.stringify(censos));
+      console.log("Censo guardado exitosamente en localStorage");
+
+      // 4. Actualizar marcadores
+      updateMarkerColor(censoData.posteId, censoData.estadoPoste === 'bueno' ? 'green' : 'orange');
+
+      // 5. Actualizar estado del proyecto
+      const project = Storage.getProjectById(censoData.projectId);
+      if (project) {
+          console.log("Actualizando estado del proyecto:", project.id);
+          if (requiereObservacion) {
+              project.estado = "Documentación Errada";
+          } else {
+              const todosPostesBuenEstado = verificarTodosPostesBuenEstado(project.id);
+              if (todosPostesBuenEstado) {
+                  project.estado = "En Gestion por Brigada";
+              }
+          }
+          Storage.saveProject(project);
+      }
+
+      // 6. Crear notificación
+      Storage.createNotification({
+          usuarioId: loggedUser.id,
+          tipo: "censo_completado",
+          mensaje: `Censo completado para poste ${censoData.numeroPoste}`,
+          fechaCreacion: new Date().toISOString(),
+          leido: false,
+          metadata: {
+              proyectoId: censoData.projectId,
+              posteId: censoData.posteId,
+              censoId: censoData.id,
+          },
+      });
+
+      showToast("Censo guardado correctamente", "success");
+      hideCensoForm();
+      checkProjectCompletion();
+  } catch (error) {
+      console.error("Error completo al guardar el censo:", error);
+      showToast(`Error al guardar el censo: ${error.message}`, "danger");
+  } finally {
+      loadProjects();
+  }
+}
+  
 
   // Función para verificar si todos los postes censados están en buen estado
   function verificarTodosPostesBuenEstado(projectId) {
-    const censos = Storage.getCensusByProject(projectId) || []
-
+    const censos = Storage.getCensusByProject(projectId) || [];
+  
     // Si no hay censos, devolver true (no hay problemas)
-    if (censos.length === 0) return true
-
+    if (censos.length === 0) return true;
+  
     // Verificar si hay algún poste en mal estado
-    const hayPosteMalEstado = censos.some((censo) => censo.estadoPoste === "malo")
-
+    const hayPosteMalEstado = censos.some((censo) => censo.estadoPoste === "malo");
+  
     // Devolver true si todos están en buen estado (no hay ninguno en mal estado)
-    return !hayPosteMalEstado
+    return !hayPosteMalEstado;
   }
 
   // Modificar la función generatePRSTForms para hacer obligatorios los campos adicionales
@@ -1440,22 +1633,61 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Función para obtener elementos seleccionados
-  function getSelectedElementos() {
-    const elementos = []
-    const elementoNA = document.getElementById("elementoNA")
+ // Función para obtener elementos seleccionados
+function getSelectedElementos() {
+  const elementos = [];
+  const elementoNA = document.getElementById("elementoNA");
 
-    // Si N/A está seleccionado, solo devolver N/A
-    if (elementoNA && elementoNA.checked) {
-      return ["N/A"]
-    }
-
-    // Obtener todos los checkboxes seleccionados
-    document.querySelectorAll("#elementosCheckboxes .elemento-checkbox:checked").forEach((checkbox) => {
-      elementos.push(checkbox.value)
-    })
-
-    return elementos
+  // Si N/A está seleccionado, solo devolver N/A
+  if (elementoNA && elementoNA.checked) {
+      return ["N/A"];
   }
+
+  // Obtener todos los checkboxes seleccionados
+  document.querySelectorAll("#elementosCheckboxes .elemento-checkbox:checked").forEach((checkbox) => {
+      elementos.push(checkbox.value);
+  });
+
+  return elementos;
+}
+
+// Función para obtener datos de PRST
+function getPRSTData() {
+  const cantidadPRST = Number.parseInt(document.getElementById("cantidadPRST").value);
+  if (cantidadPRST <= 0) return [];
+
+  const prstData = [];
+  const prstForms = document.querySelectorAll(".prst-form");
+
+  prstForms.forEach((form) => {
+      prstData.push({
+          nombre: form.querySelector(".prst-nombre").value,
+          cantidadCables: form.querySelector(".prst-cantidad-cables").value,
+          cajaEmpalme: form.querySelector(".prst-caja-empaque").value,
+          reserva: form.querySelector(".prst-reserva").value,
+          nap: form.querySelector(".prst-nap").value,
+          spt: form.querySelector(".prst-spt").value,
+          bajante: form.querySelector(".prst-bajante").value,
+          observaciones: form.querySelector(".prst-observaciones")?.value || "",
+      });
+  });
+
+  return prstData;
+}
+
+// Función para verificar si todos los postes censados están en buen estado
+function verificarTodosPostesBuenEstado(projectId) {
+  const censos = Storage.getCensusByProject(projectId) || [];
+
+  // Si no hay censos, devolver true (no hay problemas)
+  if (censos.length === 0) return true;
+
+  // Verificar si hay algún poste en mal estado
+  const hayPosteMalEstado = censos.some((censo) => censo.estadoPoste === "malo");
+
+  // Devolver true si todos están en buen estado (no hay ninguno en mal estado)
+  return !hayPosteMalEstado;
+}
 
   // Función para obtener datos de PRST
   function getPRSTData2() {
@@ -1541,11 +1773,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Función para actualizar mapa después de guardar censo
+  // Mejorar la función updateMapAfterCenso para actualizar inmediatamente el color del marcador
   function updateMapAfterCenso(censoData) {
     if (!mapCenso) return
 
     try {
-      // Buscar marcador del poste censado
+      // Buscar marcador del poste censado en el mapa de censo
       const marker = censoMarkers.find((m) => m.posteData && m.posteData.id === censoData.posteId)
       if (marker) {
         // Actualizar datos del marcador
@@ -1554,18 +1787,74 @@ document.addEventListener("DOMContentLoaded", () => {
         // Cambiar icono a verde
         const icon = L.divIcon({
           className: "custom-div-icon",
-          html: `<div style="background-color: green; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
-          iconSize: [12, 12],
-          iconAnchor: [6, 6],
+          html: `<div style="background-color: green; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5); position: relative;">
+                <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background-color: green;"></div>
+              </div>`,
+          iconSize: [20, 28],
+          iconAnchor: [10, 28],
+          popupAnchor: [0, -28],
         })
         marker.setIcon(icon)
 
         // Actualizar popup
         marker.bindPopup(`
-          <h5>Poste: ${marker.posteData.nombre}</h5>
-          <p>${marker.posteData.descripcion || "Sin descripción"}</p>
-          <p><strong>Estado:</strong> Censado</p>
-        `)
+        <h5>Poste: ${marker.posteData.nombre}</h5>
+        <p>${marker.posteData.descripcion || "Sin descripción"}</p>
+        <p><strong>Estado:</strong> Censado</p>
+        <button class="btn btn-sm btn-info mt-2 btn-ver-detalle">Ver Detalles</button>
+      `)
+
+        // Agregar evento para ver detalles
+        marker.on("popupopen", () => {
+          const btnVerDetalle = document.querySelector(".btn-ver-detalle")
+          if (btnVerDetalle) {
+            btnVerDetalle.addEventListener("click", () => {
+              showCensoDetail(censoData.projectId, censoData.posteId)
+              // Cerrar el popup
+              marker.closePopup()
+            })
+          }
+        })
+      }
+
+      // Buscar también en el mapa principal
+      const mainMarker = markers.find((m) => m.posteData && m.posteData.id === censoData.posteId)
+      if (mainMarker) {
+        // Actualizar datos del marcador
+        mainMarker.posteData.isCensado = true
+
+        // Cambiar icono a verde
+        const icon = L.divIcon({
+          className: "custom-div-icon",
+          html: `<div style="background-color: green; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5); position: relative;">
+                <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background-color: green;"></div>
+              </div>`,
+          iconSize: [20, 28],
+          iconAnchor: [10, 28],
+          popupAnchor: [0, -28],
+        })
+        mainMarker.setIcon(icon)
+
+        // Actualizar popup
+        mainMarker.bindPopup(`
+        <h5>Poste: ${mainMarker.posteData.nombre}</h5>
+        <p>${mainMarker.posteData.descripcion || "Sin descripción"}</p>
+        <p><strong>Estado:</strong> Censado</p>
+        <p><strong>Proyecto:</strong> ${currentProject?.prstNombre || "Sin nombre"}</p>
+        <button class="btn btn-sm btn-info mt-2 btn-ver-detalle">Ver Detalles</button>
+      `)
+
+        // Agregar evento para ver detalles
+        mainMarker.on("popupopen", () => {
+          const btnVerDetalle = document.querySelector(".btn-ver-detalle")
+          if (btnVerDetalle) {
+            btnVerDetalle.addEventListener("click", () => {
+              showCensoDetail(censoData.projectId, censoData.posteId)
+              // Cerrar el popup
+              mainMarker.closePopup()
+            })
+          }
+        })
       }
 
       // Actualizar progreso en la tarjeta del proyecto

@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
     populatePRSTSelects()
     extractAvailableDates()
     populateDateSelectors()
-    
+
     // Configurar botones de navegación
     setupBackToDashboard();
 
@@ -344,6 +344,29 @@ function setupEventListeners() {
     console.log("Listeners de eventos configurados correctamente")
   } catch (error) {
     console.error("Error al configurar listeners de eventos:", error)
+  }
+}
+
+// En admin.js, agregar al final de setupEventListeners()
+document.getElementById('mark-all-read')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  await markAllNotificationsAsRead();
+});
+
+// Función para marcar todas como leídas
+async function markAllNotificationsAsRead() {
+  try {
+    const notifications = Storage.getNotificationsByUser(currentUser.id)
+      .filter(n => !n.leido);
+    
+    for (const notification of notifications) {
+      Storage.markNotificationAsRead(notification.id);
+    }
+    
+    // Recargar notificaciones
+    loadNotifications();
+  } catch (error) {
+    console.error("Error al marcar todas las notificaciones como leídas:", error);
   }
 }
 
@@ -945,74 +968,124 @@ function addProjectTableEventListeners(tableElement) {
 }
 // Función para cargar las notificaciones
 function loadNotifications() {
-  console.log("Cargando notificaciones")
+  console.log("Cargando notificaciones mejoradas");
 
   try {
-    const notifications = Storage.getNotifications()
-    const notificationsList = document.getElementById("notifications-list")
-    const notificationBadge = document.getElementById("notification-badge")
+    const notifications = Storage.getNotificationsByUser(currentUser.id);
+    const notificationsList = document.getElementById("notifications-list");
+    const notificationBadge = document.getElementById("notification-badge");
 
     if (!notificationsList || !notificationBadge) {
-      console.warn("Elementos de notificaciones no encontrados")
-      return
+      console.warn("Elementos de notificaciones no encontrados");
+      return;
     }
 
     // Limpiar lista
-    notificationsList.innerHTML = ""
+    notificationsList.innerHTML = "";
 
     // Contar notificaciones no leídas
-    const unreadCount = notifications.filter((n) => !n.leido).length
+    const unreadCount = notifications.filter(n => !n.leido).length;
 
     // Actualizar badge
-    if (unreadCount > 0) {
-      notificationBadge.textContent = unreadCount
-      notificationBadge.classList.remove("d-none")
-    } else {
-      notificationBadge.classList.add("d-none")
-    }
+    notificationBadge.textContent = unreadCount > 9 ? "9+" : unreadCount.toString();
+    notificationBadge.classList.toggle("d-none", unreadCount === 0);
 
     // Si no hay notificaciones, mostrar mensaje
     if (notifications.length === 0) {
       notificationsList.innerHTML = `
-                <div class="dropdown-item text-center">No tienes notificaciones</div>
-            `
-      return
+        <div class="dropdown-item text-center py-3">No tienes notificaciones</div>
+      `;
+      return;
     }
 
     // Ordenar notificaciones por fecha (más recientes primero)
-    notifications.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+    notifications.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
     // Mostrar solo las 10 notificaciones más recientes
-    const recentNotifications = notifications.slice(0, 10)
+    const recentNotifications = notifications.slice(0, 10);
 
-    // Llenar lista con notificaciones
-    recentNotifications.forEach((notification) => {
-      const item = document.createElement("div")
-      item.className = `dropdown-item notification-item ${notification.leido ? "" : "unread"}`
-      item.innerHTML = `
-                <div class="notification-text">${notification.mensaje}</div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="notification-time">${formatDate(notification.fecha)}</small>
-                    ${notification.leido ? "" : '<span class="notification-badge"></span>'}
-                </div>
-            `
-      item.addEventListener("click", () => {
-        markNotificationAsRead(notification.id)
-      })
-      notificationsList.appendChild(item)
-    })
+    // Llenar lista con notificaciones mejoradas
+    recentNotifications.forEach(notification => {
+      const item = document.createElement("div");
+      item.className = `dropdown-item notification-item ${notification.leido ? "" : "unread"}`;
+      
+      let messageContent = `
+        <div class="notification-header d-flex justify-content-between">
+          <strong class="notification-title">${notification.titulo || "Notificación"}</strong>
+          <small class="notification-time">${formatDateTime(notification.fecha)}</small>
+        </div>
+        <div class="notification-body">
+          <p class="notification-message mb-1">${notification.mensaje}</p>
+      `;
 
-    // Agregar botón para ver todas las notificaciones
+      // Mostrar información de asignación si existe
+      if (notification.asignadoA) {
+        messageContent += `
+          <div class="assignment-info small text-muted">
+            <i class="fas fa-user-check me-1"></i>
+            Asignado a: ${notification.asignadoA} (${notification.asignadoRol || 'Sin rol'})
+          </div>
+        `;
+      }
+
+      messageContent += `</div>`;
+
+      item.innerHTML = messageContent;
+
+      // Manejar el clic en la notificación
+      item.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Marcar como leída si no lo está
+        if (!notification.leido) {
+          await markNotificationAsRead(notification.id);
+          item.classList.remove("unread");
+        }
+
+        // Si es una notificación de proyecto, mostrar el proyecto
+        if (notification.projectId) {
+          viewProjectDetails(notification.projectId);
+        }
+      });
+
+      notificationsList.appendChild(item);
+    });
+
+    // Agregar botón para ver todas las notificaciones si hay más de 10
     if (notifications.length > 10) {
-      const viewAllItem = document.createElement("div")
-      viewAllItem.className = "dropdown-item text-center"
-      viewAllItem.innerHTML = `<a href="#" class="text-primary">Ver todas las notificaciones</a>`
-      notificationsList.appendChild(viewAllItem)
+      const viewAllItem = document.createElement("div");
+      viewAllItem.className = "dropdown-item text-center bg-light py-2";
+      viewAllItem.innerHTML = `
+        <a href="#" class="text-primary" id="view-all-notifications">
+          Ver todas las notificaciones (${notifications.length})
+        </a>
+      `;
+      notificationsList.appendChild(viewAllItem);
     }
 
-    console.log("Notificaciones cargadas correctamente")
+    console.log("Notificaciones mejoradas cargadas correctamente");
   } catch (error) {
-    console.error("Error al cargar notificaciones:", error)
+    console.error("Error al cargar notificaciones mejoradas:", error);
+  }
+}
+
+// Función mejorada para marcar notificaciones como leídas
+async function markNotificationAsRead(notificationId) {
+  try {
+    Storage.markNotificationAsRead(notificationId);
+    
+    // Actualizar el contador de notificaciones no leídas
+    const unreadCount = Storage.getNotificationsByUser(currentUser.id)
+      .filter(n => !n.leido).length;
+    
+    const notificationBadge = document.getElementById("notification-badge");
+    if (notificationBadge) {
+      notificationBadge.textContent = unreadCount > 9 ? "9+" : unreadCount.toString();
+      notificationBadge.classList.toggle("d-none", unreadCount === 0);
+    }
+  } catch (error) {
+    console.error("Error al marcar notificación como leída:", error);
   }
 }
 
@@ -1641,7 +1714,10 @@ function saveProject() {
       fechaFin: projectFechaFin,
       estado: projectEstado,
       creadorId: currentUser.id,
-    }
+      // Nuevos campos para asignación
+      asignadoA: projectEstado === "Asignado" ? "Nombre del asignado" : null,
+      asignadoRol: projectEstado === "Asignado" ? "Rol del asignado" : null
+    };
 
     // Guardar proyecto
     Storage.saveProject(project)
@@ -1691,10 +1767,7 @@ function viewProjectDetails(projectId) {
     const detailProjectEstado = document.getElementById("detalleProyectoEstado")
     const detailProjectPostes = document.getElementById("detalleProyectoPostes")
     const detailProjectTipoSolicitud = document.getElementById("detalleProyectoTipoSolicitud")
-    const detailProjectCreador = document.getElementById("detalleProyectoCreador")
-    const detailProjectEjecutiva = document.getElementById("detalleProyectoEjecutiva")
-    const detailProjectAnalista = document.getElementById("detalleProyectoAnalista")
-    const detailProjectBrigada = document.getElementById("detalleProyectoBrigada")
+    const detailProjectDocumentacion = document.getElementById("detalleProyectoDocumentacion")
 
     // Llenar datos básicos
     if (detailProjectId) detailProjectId.textContent = project.id || "N/A"
@@ -1710,25 +1783,24 @@ function viewProjectDetails(projectId) {
     if (detailProjectPostes) detailProjectPostes.textContent = project.numPostes || "N/A"
     if (detailProjectTipoSolicitud) detailProjectTipoSolicitud.textContent = project.tipoSolicitud || "N/A"
 
-    // Llenar información de asignaciones
-    if (detailProjectCreador) {
-      const creador = project.creadorId ? Storage.getUserById(project.creadorId) : null
-      detailProjectCreador.textContent = creador ? `${creador.nombre} ${creador.apellido}` : "N/A"
-    }
-
-    if (detailProjectEjecutiva) {
-      const ejecutiva = project.ejecutivaId ? Storage.getUserById(project.ejecutivaId) : null
-      detailProjectEjecutiva.textContent = ejecutiva ? `${ejecutiva.nombre} ${ejecutiva.apellido}` : "N/A"
-    }
-
-    if (detailProjectAnalista) {
-      const analista = project.analistaId ? Storage.getUserById(project.analistaId) : null
-      detailProjectAnalista.textContent = analista ? `${analista.nombre} ${analista.apellido}` : "N/A"
-    }
-
-    if (detailProjectBrigada) {
-      const brigada = project.brigadaId ? Storage.getUserById(project.brigadaId) : null
-      detailProjectBrigada.textContent = brigada ? `${brigada.nombre} ${brigada.apellido}` : "N/A"
+    // Mostrar documentación si existe
+    if (detailProjectDocumentacion) {
+      if (project.documentacion && project.documentacion.length > 0) {
+        let html = '<div class="documentacion-list">';
+        project.documentacion.forEach(doc => {
+          html += `
+            <div class="documento-item mb-2 p-2 border rounded">
+              <strong>${doc.tipo || 'Documento'}:</strong> 
+              <a href="${doc.url || '#'}" target="_blank" class="ms-2">${doc.nombre || 'Ver documento'}</a>
+              ${doc.observaciones ? `<div class="text-muted small mt-1">${doc.observaciones}</div>` : ''}
+            </div>
+          `;
+        });
+        html += '</div>';
+        detailProjectDocumentacion.innerHTML = html;
+      } else {
+        detailProjectDocumentacion.innerHTML = '<div class="text-muted">No hay documentación adjunta</div>';
+      }
     }
 
     // Mostrar modal

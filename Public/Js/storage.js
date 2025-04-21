@@ -939,20 +939,49 @@ const Storage = {
   },
 
   // Add a function to create notifications for new projects
-  createNewProjectNotification: function (project, userId) {
-    const notification = {
-      id: null, // Will be assigned in createNotification
-      usuarioId: userId,
-      fecha: new Date().toISOString(),
-      titulo: "Nuevo Proyecto",
-      mensaje: `Se ha creado un nuevo proyecto: "${project.nombre}" (${project.prstNombre})`,
-      leido: false,
-      tipo: "nuevo_proyecto",
-      projectId: project.id,
-    }
+  // Modificar la función createNewProjectNotification
+createNewProjectNotification: function(project, userId) {
+  const notification = {
+    id: null,
+    usuarioId: userId,
+    fecha: new Date().toISOString(),
+    titulo: "Nuevo Proyecto Asignado",
+    mensaje: `Se ha creado un nuevo proyecto: "${project.nombre}" (${project.prstNombre})`,
+    leido: false,
+    tipo: "nuevo_proyecto",
+    projectId: project.id,
+    // Nuevos campos
+    asignadoA: project.asignadoA || null,
+    asignadoRol: project.asignadoRol || null
+  };
 
-    return this.createNotification(notification)
-  },
+  return this.createNotification(notification);
+},
+
+// Modificar la función createProjectStatusNotification
+createProjectStatusNotification: function(project, oldStatus, newStatus, userId) {
+  let mensaje = `El proyecto "${project.nombre}" ha cambiado de estado: ${oldStatus} → ${newStatus}`;
+  
+  // Agregar información de asignación si corresponde
+  if (newStatus === "Asignado" && project.asignadoA) {
+    mensaje += ` (Asignado a: ${project.asignadoA} - ${project.asignadoRol})`;
+  }
+
+  const notification = {
+    id: null,
+    usuarioId: userId,
+    fecha: new Date().toISOString(),
+    titulo: "Cambio de Estado de Proyecto",
+    mensaje: mensaje,
+    leido: false,
+    tipo: "estado_proyecto",
+    projectId: project.id,
+    asignadoA: project.asignadoA || null,
+    asignadoRol: project.asignadoRol || null
+  };
+
+  return this.createNotification(notification);
+},
 }
 
 // Asegurarse de que el Storage se inicialice cuando se carga la página
