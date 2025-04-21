@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air-e - Panel de Brigada</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./Css/brigada.css" />
+    <style>
+        
+    </style>
+</head>
+<body>
+    <!-- Encabezado -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow p-3">
+        <div class="container">
+            <a class="navbar-brand" href="./index.html">
+                <img id="Logoair-e" src="./Images/LogoAir-e.webp" alt="Logo de Air-e" style="height: 40px;">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="#" data-section="seccionProyectos">Mis Proyectos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" data-section="seccionNuevoCenso">Nuevo Censo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" data-section="seccionHistorial">Historial</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" data-section="seccionPerfil">Perfil</a></li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <div class="position-relative me-3">
+                        <button class="btn btn-outline-secondary position-relative" id="btnNotificaciones">
+                            <i class="bi bi-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" id="notificationCount">0</span>
+                        </button>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar me-2" id="userInitials">U</div>
+                            <span id="userName">Usuario</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="#" data-section="seccionPerfil"><i class="bi bi-person me-2"></i>Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="btnLogout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Contenido principal -->
+    <div class="container main-content">
+        <!-- Sección de Proyectos -->
+        <div id="seccionProyectos" class="section">
+            <h2 class="section-title">Mis Proyectos</h2>
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="map"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h4>Proyectos Asignados</h4>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="form-check form-switch d-inline-block">
+                        <input class="form-check-input" type="checkbox" id="mostrarCompletados">
+                        <label class="form-check-label" for="mostrarCompletados">Mostrar completados</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row" id="proyectosContainer">
+                <!-- Aquí se cargarán dinámicamente los proyectos -->
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Cargando proyectos...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección de Nuevo Censo -->
+        <div id="seccionNuevoCenso" class="section d-none">
+            <h2 class="section-title">Nuevo Censo - <span id="proyectoTitulo">Seleccione un proyecto</span></h2>
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="mapCenso"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="alert alert-info" id="instruccionesCenso">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Seleccione un poste en el mapa para realizar el censo. Los postes en rojo aún no han sido censados, los verdes ya están censados.
+                    </div>
+                </div>
+            </div>
+            
+            <div id="formCensoContainer" class="d-none">
+                <form id="formCenso">
+                    <!-- Campos ocultos -->
+                    <input type="hidden" id="projectId">
+                    <input type="hidden" id="posteId">
+                    <input type="hidden" id="posteLat">
+                    <input type="hidden" id="posteLng">
+                    
+                    <!-- Sección 1: Información Base (Automática) -->
+                    <div class="card mb-4">
+                      <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información Base</h5>
+                      </div>
+                      <div class="card-body">
+                        <div class="row">
+                          <div class="col-md-3 mb-3">
+                            <label class="form-label">Fecha</label>
+                            <input type="text" class="form-control bg-light" id="fechaCenso" readonly>
+                            <small class="text-muted">Generado automáticamente</small>
+                          </div>
+                          <div class="col-md-3 mb-3">
+                            <label class="form-label">Número de Poste</label>
+                            <input type="text" class="form-control bg-light" id="numeroPoste" readonly>
+                            <small class="text-muted">Desde datos KML</small>
+                          </div>
+                          <div class="col-md-3 mb-3">
+                            <label class="form-label">Coordenadas</label>
+                            <input type="text" class="form-control bg-light" id="coordenadas" readonly>
+                            <small class="text-muted">Latitud, Longitud</small>
+                          </div>
+                          <div class="col-md-3 mb-3">
+                            <label class="form-label">PRST Solicitante</label>
+                            <input type="text" class="form-control bg-light" id="prstSolicitante" readonly>
+                            <small class="text-muted">Del proyecto asignado</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Sección 2: Características del Poste -->
+                    <div class="card mb-4">
+                      <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-postage me-2"></i>Características del Poste</h5>
+                      </div>
+                      <div class="card-body">
+                        <div class="row">
+                          <div class="col-md-3 mb-3">
+                            <label for="tipoPoste" class="form-label required-field">Tipo de Poste</label>
+                            <select class="form-select" id="tipoPoste" required>
+                              <option value="">Seleccione...</option>
+                              <option value="BT">BT</option>
+                              <option value="MT">MT</option>
+                              <option value="MT-BT">MT-BT</option>
+                              <option value="Torre STR">Torre STR</option>
+                              <option value="Sin identificar">Sin identificar</option>
+                            </select>
+                            <div class="invalid-feedback">Campo obligatorio</div>
+                          </div>
+                          <div class="col-md-3 mb-3">
+                            <label for="materialPoste" class="form-label required-field">Material</label>
+                            <select class="form-select" id="materialPoste" required>
+                              <option value="">Seleccione...</option>
+                              <option value="MADERA">MADERA</option>
+                              <option value="CONCRETO">CONCRETO</option>
+                              <option value="FIBRA">FIBRA</option>
+                              <option value="METALICO">METALICO</option>
+                            </select>
+                            <div class="invalid-feedback">Campo obligatorio</div>
+                          </div>
+                          <div class="col-md-3 mb-3">
+                            <label for="alturaPoste" class="form-label required-field">Altura (metros)</label>
+                            <select class="form-select" id="alturaPoste" required>
+                              <option value="">Seleccione...</option>
+                              <option value="8">8 m</option>
+                              <option value="9">9 m</option>
+                              <option value="10">10 m</option>
+                              <option value="11">11 m</option>
+                              <option value="12">12 m</option>
+                              <option value="14">14 m</option>
+                              <option value="16">16 m</option>
+                              <option value="18">18 m</option>
+                              <option value="25">25 m</option>
+                            </select>
+                            <div class="invalid-feedback">Campo obligatorio</div>
+                          </div>
+                          <div class="col-md-3 mb-3">
+                            <label for="cantidadPRST" class="form-label required-field">Cantidad de PRST</label>
+                            <select class="form-select" id="cantidadPRST" required>
+                              <option value="">Seleccione...</option>
+                              <option value="0">0</option>
+                              <option value="1">1</option>
+                              <option value="2">2</option>
+                              <option value="3">3</option>
+                              <option value="4">4</option>
+                              <option value="5">5</option>
+                              <option value="6">6</option>
+                              <option value="7">7</option>
+                              <option value="8">8</option>
+                              <option value="9">9</option>
+                              <option value="10">10</option>
+                            </select>
+                            <div class="invalid-feedback">Campo obligatorio</div>
+                          </div>
+                        </div>
+                        
+                        <div class="row">
+                          <div class="col-md-12 mb-3">
+                            <label for="observacionesPoste" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observacionesPoste" rows="2" placeholder="Observaciones sobre el poste..."></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Sección 3: Elementos Existentes -->
+                    
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Elementos Existentes</h5>
+  </div>
+  <div class="card-body">
+    <div class="alert alert-info mb-4">
+      <i class="bi bi-info-circle me-2"></i> Marque <strong>N/A</strong> si no hay elementos o seleccione los elementos presentes
+    </div>
+    
+    <div class="row">
+      <div class="col-md-12 mb-3">
+        <div class="form-check">
+          <input class="form-check-input elemento-checkbox" type="checkbox" id="elementoNA" value="N/A">
+          <label class="form-check-label fw-bold" for="elementoNA">N/A (No aplica)</label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row" id="elementosCheckboxes">
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          <input class="form-check-input elemento-checkbox" type="checkbox" id="elementoCortacircuitos" value="Cortacircuitos/Seccionador">
+          <label class="form-check-label" for="elementoCortacircuitos">Cortacircuitos/Seccionador</label>
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          <input class="form-check-input elemento-checkbox" type="checkbox" id="elementoTransformador" value="Transformador de Distribución">
+          <label class="form-check-label" for="elementoTransformador">Transformador de Distribución</label>
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          <input class="form-check-input elemento-checkbox" type="checkbox" id="elementoInterruptor" value="Interruptor de Potencia">
+          <label class="form-check-label" for="elementoInterruptor">Interruptor de Potencia</label>
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          <input class="form-check-input elemento-checkbox" type="checkbox" id="elementoReconectador" value="Reconectador">
+          <label class="form-check-label" for="elementoReconectador">Reconectador</label>
+        </div>
+      </div>
+    </div>
+    <div class="invalid-feedback d-none" id="elementosError">Seleccione N/A o al menos un elemento</div>
+  </div>
+</div>
+                    
+                    <!-- Sección 4: PRST (Dinámica) -->
+                    <div id="prstFormsContainer" class="d-none">
+                      <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                          <h5 class="mb-0"><i class="bi bi-ethernet me-2"></i>Información de PRST</h5>
+                        </div>
+                        <div class="card-body">
+                          <div id="prstForms">
+                            <!-- Se generará dinámicamente según cantidad de PRST -->
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Sección 5: Fotografías Obligatorias -->
+                    <div class="card mb-4">
+                      <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Fotografías Obligatorias</h5>
+                      </div>
+                      <div class="card-body">
+                        <div class="alert alert-warning">
+                          <i class="bi bi-exclamation-triangle me-2"></i> Todas las fotografías son <strong>obligatorias</strong>
+                        </div>
+                        
+                        <div class="row">
+                          <!-- Foto Panorámica -->
+                          <div class="col-md-4 mb-3">
+                            <label class="form-label required-field">Foto Panorámica</label>
+                            <div class="foto-container border rounded p-2">
+                              <img src="./Images/placeholder-image.png" class="foto-preview img-thumbnail w-100 mb-2" id="previewFotoPanoramica" style="height: 150px; object-fit: cover;">
+                              <label class="btn btn-outline-primary w-100">
+                                <i class="bi bi-upload me-2"></i> Subir Foto
+                                <input type="file" id="fotoPanoramica" accept="image/*" class="d-none" required>
+                              </label>
+                              <div class="invalid-feedback">Foto obligatoria</div>
+                              <small class="text-muted d-block mt-1">Vista general del poste</small>
+                            </div>
+                          </div>
+                          
+                          <!-- Foto Detallada -->
+                          <div class="col-md-4 mb-3">
+                            <label class="form-label required-field">Foto Detallada</label>
+                            <div class="foto-container border rounded p-2">
+                              <img src="./Images/placeholder-image.png" class="foto-preview img-thumbnail w-100 mb-2" id="previewFotoDetallada" style="height: 150px; object-fit: cover;">
+                              <label class="btn btn-outline-primary w-100">
+                                <i class="bi bi-upload me-2"></i> Subir Foto
+                                <input type="file" id="fotoDetallada" accept="image/*" class="d-none" required>
+                              </label>
+                              <div class="invalid-feedback">Foto obligatoria</div>
+                              <small class="text-muted d-block mt-1">Detalle de elementos</small>
+                            </div>
+                          </div>
+                          
+                          <!-- Foto de Placa -->
+                          <div class="col-md-4 mb-3">
+                            <label class="form-label required-field">Foto de la Placa</label>
+                            <div class="foto-container border rounded p-2">
+                              <img src="./Images/placeholder-image.png" class="foto-preview img-thumbnail w-100 mb-2" id="previewFotoPlaca" style="height: 150px; object-fit: cover;">
+                              <label class="btn btn-outline-primary w-100">
+                                <i class="bi bi-upload me-2"></i> Subir Foto
+                                <input type="file" id="fotoPlaca" accept="image/*" class="d-none" required>
+                              </label>
+                              <div class="invalid-feedback">Foto obligatoria</div>
+                              <small class="text-muted d-block mt-1">Identificación del poste</small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Botones de Acción -->
+                    <div class="row mb-4">
+                      <div class="col-md-12 d-flex justify-content-between">
+                        <button type="button" class="btn btn-danger" id="btnCancelarCenso">
+                          <i class="bi bi-x-circle me-2"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success" id="btnGuardarCenso">
+                          <i class="bi bi-check-circle me-2"></i> Guardar Censo
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+            </div>
+            
+            <div class="row mb-4" id="finalizarProyectoContainer" style="display: none;">
+                <div class="col-md-12">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        ¡Todos los postes han sido censados! Puede finalizar el proyecto.
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-success" id="btnFinalizarProyecto">
+                            <i class="bi bi-check-lg me-2"></i> Finalizar Proyecto
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección de Historial -->
+        <div id="seccionHistorial" class="section d-none">
+            <h2 class="section-title">Historial de Proyectos</h2>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>PRST</th>
+                                    <th>Departamento</th>
+                                    <th>Municipio</th>
+                                    <th>Estado</th>
+                                    <th>Progreso</th>
+                                    <th>Fecha Asignación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historialProyectosBody">
+                                <!-- Aquí se cargarán dinámicamente los proyectos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección de Perfil -->
+        <div id="seccionPerfil" class="section d-none">
+            <h2 class="section-title">Mi Perfil</h2>
+            
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <div class="profile-info">
+                        <h4>Información Personal</h4>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Nombre Completo</div>
+                                    <div class="info-value" id="perfilNombre">Cargando...</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Usuario</div>
+                                    <div class="info-value" id="perfilUsuario">Cargando...</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Correo Electrónico</div>
+                                    <div class="info-value" id="perfilCorreo">Cargando...</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Rol</div>
+                                    <div class="info-value" id="perfilRol">Cargando...</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Departamento Asignado</div>
+                                    <div class="info-value" id="perfilDepartamento">Cargando...</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Estado</div>
+                                    <div class="info-value">
+                                        <span class="badge bg-success" id="perfilEstado">Activo</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <button type="button" class="btn btn-outline-primary" id="btnCambiarPassword">
+                                    <i class="bi bi-key me-2"></i> Solicitar Cambio de Contraseña
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Confirmación de Poste -->
+    <div class="modal fade" id="modalConfirmacionPoste" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Selección</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Desea realizar el censo para el poste <strong id="posteSeleccionadoNombre"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarPoste">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Advertencia de Poste Censado -->
+    <div class="modal fade" id="modalPosteCensado" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Poste Ya Censado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        El poste <strong id="posteCensadoNombre"></strong> ya ha sido censado.
+                    </div>
+                    <p>¿Desea ver los detalles del censo realizado?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="btnVerDetalleCenso">Ver Detalles</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Detalle de Censo -->
+    <div class="modal fade" id="modalDetalleCenso" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalle del Censo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="detalleCensoBody">
+                    <!-- Aquí se cargará dinámicamente el detalle del censo -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Finalizar Proyecto -->
+    <div class="modal fade" id="modalFinalizarProyecto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Finalizar Proyecto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Está a punto de finalizar el proyecto <strong id="finalizarProyectoNombre"></strong>.
+                    </div>
+                    <p>Una vez finalizado, no podrá realizar más cambios en los censos. ¿Está seguro de continuar?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarFinalizarProyecto">Finalizar Proyecto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Cambio de Contraseña -->
+    <div class="modal fade" id="modalCambioPassword" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Solicitar Cambio de Contrasea</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Para solicitar un cambio de contraseña, ingrese su contraseña actual y la nueva contraseña deseada.</p>
+                    <form id="formCambioPassword">
+                        <div class="mb-3">
+                            <label for="passwordActual" class="form-label">Contraseña Actual</label>
+                            <input type="password" class="form-control" id="passwordActual" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="passwordNueva" class="form-label">Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="passwordNueva" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="passwordConfirmar" class="form-label">Confirmar Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="passwordConfirmar" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnEnviarSolicitudPassword">Enviar Solicitud</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+    
+    <!-- Pie de página -->
+    <footer class="bg-white shadow p-3 mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 col-sm-12 mb-3 text-center text-md-start">
+                    <img src="./Images/IconoAir-e.webp" alt="Ícono Air-e" width="80">
+                    <p><strong>Dirección:</strong><br>
+                    Cra 57 No 99A - 65<br>
+                    Torres del Atlántico.<br>
+                    Barranquilla, Atlántico.</p>
+                </div>
+                <div class="col-md-4 col-sm-12 mb-3 text-center">
+                    <p><strong class="text-primary">Líneas de atención:</strong><br>
+                    Fijo o celular: 115<br>
+                    Línea nacional gratuita: 018000 930 135<br>
+                    PBX Atlántico: (605) 361 1000<br>
+                    PBX Magdalena: (605) 423 7097<br>
+                    PBX Guajira: (605) 727 9814</p>
+                </div>
+                <div class="col-md-4 col-sm-12 mb-3 text-center text-md-end">
+                    <p><strong class="text-primary">Síguenos</strong></p>
+                    <div class="social-icons">
+                        <a href="#" class="me-2"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="me-2"><i class="fab fa-youtube"></i></a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    </div>
+                    <p class="politicas-link mt-2"><a href="#">Políticas tratamiento de datos »</a></p>
+                </div>
+            </div>
+            <div class="text-center small text-muted">
+                <p>&copy; 2025 Air-e Censo. Air-e intervenida 2024.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <!-- Custom JS -->
+    <script src="./Js/storage.js"></script>
+    <script src="./Js/kml-handler.js"></script>
+    <script src="./Js/censo.js"></script>
+    <script src="./Js/brigada.js"></script>
+</body>
+</html>

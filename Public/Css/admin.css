@@ -1,0 +1,432 @@
+/* Estilos generales */
+body {
+  font-family: "Roboto", sans-serif;
+  background-color: #f5f5f5;
+}
+
+.main-content {
+  padding: 20px;
+  margin-bottom: 60px;
+}
+
+/* Estilos para las tarjetas de estadísticas */
+.stat-card {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-card-body {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.stat-card-icon {
+  font-size: 2.5rem;
+  margin-right: 15px;
+  opacity: 0.8;
+}
+
+.stat-card-info {
+  flex-grow: 1;
+}
+
+.stat-card-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 5px;
+  opacity: 0.9;
+}
+
+.stat-card-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* Estilos para las pestañas */
+.nav-tabs .nav-link {
+  padding: 0.75rem 1.25rem;
+  font-weight: 500;
+  border-radius: 0.25rem 0.25rem 0 0;
+  transition: all 0.2s ease;
+}
+
+.nav-tabs .nav-link:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+.nav-tabs .nav-link.active {
+  font-weight: 600;
+  border-top: 3px solid #0d6efd;
+}
+
+/* Estilos para las tablas */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead th {
+  background-color: #f8f9fa;
+  border-top: none;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 600px;
+}
+
+/* Estilos para los botones de acción */
+.action-buttons .btn {
+  margin-right: 5px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Estilos para las notificaciones */
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 50%;
+  background-color: #dc3545;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.notifications-dropdown {
+  width: 350px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.notification-item {
+  padding: 12px 15px;
+  border-bottom: 1px solid #dee2e6;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: rgba(13, 110, 253, 0.1);
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item.unread {
+  background-color: rgba(13, 110, 253, 0.05);
+  font-weight: 500;
+}
+
+.notification-text {
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.notification-badge {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #0d6efd;
+  display: inline-block;
+}
+
+/* Estilos para los filtros */
+.date-filter-container {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 10px;
+  background-color: #f8f9fa;
+}
+
+/* Estilos para los modales */
+.modal-header {
+  border-bottom: 0;
+  padding: 1.25rem 1.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 0;
+  padding: 1.25rem 1.5rem;
+}
+
+.modal-title {
+  font-weight: 600;
+}
+
+/* Estilos para los campos específicos de rol */
+.role-specific-fields {
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #dee2e6;
+}
+
+/* Estilos para el perfil de usuario */
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.profile-item {
+  display: flex;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 10px;
+}
+
+.profile-label {
+  font-weight: 600;
+  width: 200px;
+  color: #495057;
+}
+
+.profile-value {
+  flex-grow: 1;
+}
+
+/* Estilos para los badges de estado */
+.badge {
+  padding: 0.5em 0.8em;
+  font-weight: 500;
+  border-radius: 30px;
+}
+
+.badge-nuevo {
+  background-color: #6c757d;
+  color: white;
+}
+
+.badge-viabilidad {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-gestion {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.badge-verificacion {
+  background-color: #6610f2;
+  color: white;
+}
+
+.badge-informe {
+  background-color: #20c997;
+  color: white;
+}
+
+.badge-mejorar {
+  background-color: #fd7e14;
+  color: white;
+}
+
+.badge-errada {
+  background-color: #dc3545;
+  color: white;
+}
+
+.badge-finalizado {
+  background-color: #28a745;
+  color: white;
+}
+
+/* Estilos para los gráficos */
+canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+  .stat-card-body {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-card-icon {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .profile-item {
+    flex-direction: column;
+  }
+
+  .profile-label {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+}
+
+/* Estilos para el historial de actividades */
+.activity-history {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  padding: 10px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-date {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.activity-description {
+  margin-top: 5px;
+}
+
+/* Estilos para los estados de usuario */
+.user-active {
+  color: #28a745;
+}
+
+.user-inactive {
+  color: #dc3545;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Añadir estos estilos al archivo CSS */
+.clickable {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.clickable:hover {
+  transform: scale(1.03);
+}
+
+.stat-card {
+  min-height: 120px;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .stat-card {
+    margin-bottom: 15px;
+  }
+
+  .stat-card-icon {
+    font-size: 2rem;
+  }
+
+  .stat-card-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .stat-card-body {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-card-icon {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+}
+
+/* Estilos para el gráfico de flujo */
+#time-period-select {
+  max-width: 150px;
+}
+
+/* Estilos para la sección de proyectos por departamento */
+#department-projects-container {
+  transition: all 0.3s ease;
+}
+
+/* Mejoras para los botones de acción */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 0.2rem;
+}
+
+.btn-sm i {
+  font-size: 0.875rem;
+}
+
+/* Mejoras para las tarjetas */
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+}
+
+.nav-profile {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.nav-profile img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 8px;
+}

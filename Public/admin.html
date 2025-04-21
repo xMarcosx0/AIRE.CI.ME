@@ -1,0 +1,910 @@
+// File: Public/admin.html
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+        }
+        .nav-link {
+            color: #495057;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0d6efd;
+            background-color: #e9ecef;
+        }
+        .card-counter {
+            box-shadow: 2px 2px 10px #DADADA;
+            margin: 5px;
+            padding: 20px 10px;
+            background-color: #fff;
+            height: 100px;
+            border-radius: 5px;
+            transition: .3s linear all;
+        }
+        .card-counter:hover {
+            box-shadow: 4px 4px 20px #DADADA;
+            transition: .3s linear all;
+        }
+        .card-counter.primary {
+            background-color: #007bff;
+            color: #FFF;
+        }
+        .card-counter.danger {
+            background-color: #ef5350;
+            color: #FFF;
+        }  
+        .card-counter.success {
+            background-color: #66bb6a;
+            color: #FFF;
+        }  
+        .card-counter.info {
+            background-color: #26c6da;
+            color: #FFF;
+        }  
+        .card-counter i {
+            font-size: 5em;
+            opacity: 0.2;
+        }
+        .card-counter .count-numbers {
+            position: absolute;
+            right: 35px;
+            top: 20px;
+            font-size: 32px;
+            display: block;
+        }
+        .card-counter .count-name {
+            position: absolute;
+            right: 35px;
+            top: 65px;
+            font-style: italic;
+            text-transform: capitalize;
+            opacity: 0.5;
+            display: block;
+            font-size: 18px;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        .notification-badge {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #dc3545;
+        }
+        .unread {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#dashboard" data-bs-toggle="tab">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#users" data-bs-toggle="tab">
+                                <i class="fas fa-users me-2"></i>Usuarios
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#projects" data-bs-toggle="tab">
+                                <i class="fas fa-project-diagram me-2"></i>Proyectos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#settings" data-bs-toggle="tab">
+                                <i class="fas fa-cog me-2"></i>Configuración
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Navbar -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Panel de Administración</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="dropdown me-2">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                <span id="current-period">Últimos 30 días</span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <li><a class="dropdown-item time-period-btn active" href="#" data-period="day">Hoy</a></li>
+                                <li><a class="dropdown-item time-period-btn" href="#" data-period="week">Esta semana</a></li>
+                                <li><a class="dropdown-item time-period-btn" href="#" data-period="month">Últimos 30 días</a></li>
+                                <li><a class="dropdown-item time-period-btn" href="#" data-period="year">Este año</a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-bell"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notification-badge">
+                                    0
+                                </span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 300px;">
+                                <li><h6 class="dropdown-header">Notificaciones</h6></li>
+                                <div id="notifications-list">
+                                    <div class="dropdown-item text-center">Cargando notificaciones...</div>
+                                </div>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-center" href="#">Ver todas</a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown ms-2">
+                            <button class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="https://via.placeholder.com/30" class="rounded-circle me-2" width="30" height="30">
+                                <span id="user-name">Admin</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                <li><a class="dropdown-item" href="#" id="profile-button"><i class="fas fa-user me-2"></i>Perfil</a></li>
+                                <li><a class="dropdown-item" href="#" id="change-password-btn"><i class="fas fa-key me-2"></i>Cambiar contraseña</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logout-button" onclick="directLogout(); return false;"><i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Dashboard Tab -->
+                    <div class="tab-pane fade show active" id="dashboard">
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card-counter primary" id="show-users-card">
+                                    <i class="fas fa-users"></i>
+                                    <span class="count-numbers" id="total-users">0</span>
+                                    <span class="count-name">Usuarios</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card-counter info" id="show-projects-card">
+                                    <i class="fas fa-project-diagram"></i>
+                                    <span class="count-numbers" id="total-projects">0</span>
+                                    <span class="count-name">Proyectos</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card-counter warning" id="show-in-progress-card">
+                                    <i class="fas fa-tasks"></i>
+                                    <span class="count-numbers" id="in-progress-projects">0</span>
+                                    <span class="count-name">En gestión</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card-counter success" id="show-completed-card">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span class="count-numbers" id="completed-projects">0</span>
+                                    <span class="count-name">Finalizados</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">Proyectos por Estado</h5>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary time-period-btn active" data-period="month">Mensual</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary time-period-btn" data-period="year">Anual</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="projects-by-status-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">Proyectos por Departamento</h5>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-department-chart">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="projects-by-department-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">Flujo de Proyectos</h5>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary time-period-btn active" data-period="day">Diario</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary time-period-btn" data-period="month">Mensual</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary time-period-btn" data-period="year">Anual</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="projects-flow-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                    </div>
+
+                    <!-- Users Tab -->
+                    <div class="tab-pane fade" id="users">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                            <h2 class="h2">Gestión de Usuarios</h2>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <button class="btn btn-primary" id="new-user-button">
+                                    <i class="fas fa-plus me-1"></i> Nuevo Usuario
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Usuario</th>
+                                        <th>Correo</th>
+                                        <th>Rol</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <tr>
+                                        <td colspan="7" class="text-center">Cargando usuarios...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Projects Tab -->
+                    <div class="tab-pane fade" id="projects">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                            <h2 class="h2">Gestión de Proyectos</h2>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <button class="btn btn-primary me-2" id="new-project-button">
+                                    <i class="fas fa-plus me-1"></i> Nuevo Proyecto
+                                </button>
+                                <button class="btn btn-secondary" id="filter-projects-button" data-bs-toggle="collapse" data-bs-target="#filters-collapse">
+                                    <i class="fas fa-filter me-1"></i> Filtros
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="collapse mb-3" id="filters-collapse">
+                            <div class="card card-body">
+                                <form id="filter-form">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label for="filter-date-type" class="form-label">Tipo de Fecha</label>
+                                                <select class="form-select" id="filter-date-type">
+                                                    <option value="creacion">Creación</option>
+                                                    <option value="inicio">Inicio</option>
+                                                    <option value="fin">Finalización</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label for="filter-date-from" class="form-label">Desde</label>
+                                                <select class="form-select" id="filter-date-from">
+                                                    <option value="">Seleccione fecha</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label for="filter-date-to" class="form-label">Hasta</label>
+                                                <select class="form-select" id="filter-date-to">
+                                                    <option value="">Seleccione fecha</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label for="filter-status" class="form-label">Estado</label>
+                                                <select class="form-select" id="filter-status">
+                                                    <option value="">Todos</option>
+                                                    <option value="Nuevo">Nuevo</option>
+                                                    <option value="En Proceso de Viabilidad">En Proceso de Viabilidad</option>
+                                                    <option value="En Gestión">En Gestión</option>
+                                                    <option value="Finalizado">Finalizado</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="filter-prst" class="form-label">PRST</label>
+                                                <select class="form-select" id="filter-prst">
+                                                    <option value="">Todos</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="filter-department" class="form-label">Departamento</label>
+                                                <select class="form-select" id="filter-department">
+                                                    <option value="">Todos</option>
+                                                    <option value="Atlántico">Atlántico</option>
+                                                    <option value="La Guajira">La Guajira</option>
+                                                    <option value="Magdalena">Magdalena</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <button type="button" class="btn btn-primary" id="apply-filters">Aplicar Filtros</button>
+                                        <button type="reset" class="btn btn-outline-secondary">Limpiar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>OT AIR-E</th>
+                                        <th>Nombre</th>
+                                        <th>PRST</th>
+                                        <th>Departamento</th>
+                                        <th>Fecha Creación</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Fecha Fin</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="projects-table-body">
+                                    <tr>
+                                        <td colspan="9" class="text-center">Cargando proyectos...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div class="tab-pane fade" id="settings">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                            <h2 class="h2">Configuración del Sistema</h2>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Roles y Permisos</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Configuración de roles y permisos del sistema.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Configuración General</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Configuración general del sistema.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="user-title">Nuevo Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="user-form">
+                    <div class="modal-body">
+                        <input type="hidden" id="user-id">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="user-nombre" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="user-nombre" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="user-apellido" class="form-label">Apellido</label>
+                                    <input type="text" class="form-control" id="user-apellido" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="user-usuario" class="form-label">Usuario</label>
+                                    <input type="text" class="form-control" id="user-usuario" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="user-email" class="form-label">Correo Electrónico</label>
+                                    <input type="email" class="form-control" id="user-email" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="user-rol" class="form-label">Rol</label>
+                                    <select class="form-select" id="user-rol" required>
+                                        <option value="admin">Administrador</option>
+                                        <option value="ejecutiva">Ejecutiva</option>
+                                        <option value="coordinador">Coordinador</option>
+                                        <option value="analista">Analista</option>
+                                        <option value="brigada">Brigada</option>
+                                        <option value="prst">PRST</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="user-activo-text" class="form-label">Estado</label>
+                                    <input type="text" class="form-control" id="user-activo-text" value="Activo" readonly>
+                                    <input type="hidden" id="user-activo" value="true">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="user-password" class="form-label">Contraseña</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="user-password" required>
+                                <button class="btn btn-outline-secondary" type="button" id="toggle-password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Campos específicos para PRST -->
+                        <div id="prst-fields" class="d-none">
+                            <hr>
+                            <h5>Información de PRST</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="user-prst-nombre" class="form-label">Nombre del PRST</label>
+                                        <input type="text" class="form-control" id="user-prst-nombre">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="user-cedula" class="form-label">Cédula</label>
+                                        <input type="text" class="form-control" id="user-cedula">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="user-matricula" class="form-label">Matrícula Profesional</label>
+                                        <input type="text" class="form-control" id="user-matricula">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="user-celular" class="form-label">Celular</label>
+                                        <input type="text" class="form-control" id="user-celular">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="user-direccion" class="form-label">Dirección</label>
+                                        <input type="text" class="form-control" id="user-direccion">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="user-barrio" class="form-label">Barrio</label>
+                                        <input type="text" class="form-control" id="user-barrio">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="user-ciudad" class="form-label">Ciudad</label>
+                                <input type="text" class="form-control" id="user-ciudad">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" id="toggle-user-status-btn">
+                            <span id="toggle-status-text">Desactivar Usuario</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="save-user-button">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Modal -->
+    <div class="modal fade" id="projectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="project-title">Nuevo Proyecto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="project-form">
+                    <div class="modal-body">
+                        <input type="hidden" id="project-id">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="project-nombre" class="form-label">Nombre del Proyecto</label>
+                                    <input type="text" class="form-control" id="project-nombre" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="project-prst" class="form-label">PRST</label>
+                                    <select class="form-select" id="project-prst" required>
+                                        <option value="">Seleccione un PRST</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="project-departamento" class="form-label">Departamento</label>
+                                    <select class="form-select" id="project-departamento" required>
+                                        <option value="">Seleccione</option>
+                                        <option value="Atlántico">Atlántico</option>
+                                        <option value="La Guajira">La Guajira</option>
+                                        <option value="Magdalena">Magdalena</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="project-fecha-creacion" class="form-label">Fecha Creación</label>
+                                    <input type="date" class="form-control" id="project-fecha-creacion" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="project-estado" class="form-label">Estado</label>
+                                    <select class="form-select" id="project-estado" required>
+                                        <option value="Nuevo">Nuevo</option>
+                                        <option value="En Proceso de Viabilidad">En Proceso de Viabilidad</option>
+                                        <option value="En Gestión">En Gestión</option>
+                                        <option value="Finalizado">Finalizado</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="project-fecha-inicio" class="form-label">Fecha Inicio</label>
+                                    <input type="date" class="form-control" id="project-fecha-inicio">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="project-fecha-fin" class="form-label">Fecha Fin</label>
+                                    <input type="date" class="form-control" id="project-fecha-fin">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="save-project-button">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Status Modal -->
+    <div class="modal fade" id="changeStatusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cambiar Estado de Proyecto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="change-status-form">
+                    <div class="modal-body">
+                        <input type="hidden" id="project-id-status">
+                        <div class="mb-3">
+                            <label for="project-status" class="form-label">Nuevo Estado</label>
+                            <select class="form-select" id="project-status" required>
+                                <option value="Nuevo">Nuevo</option>
+                                <option value="En Proceso de Viabilidad">En Proceso de Viabilidad</option>
+                                <option value="En Gestión">En Gestión</option>
+                                <option value="Finalizado">Finalizado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="save-status-button">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Perfil de Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <p id="profile-nombre" class="form-control-static"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Apellido</label>
+                        <p id="profile-apellido" class="form-control-static"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Usuario</label>
+                        <p id="profile-usuario" class="form-control-static"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Correo Electrónico</label>
+                        <p id="profile-correo" class="form-control-static"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rol</label>
+                        <p id="profile-rol" class="form-control-static"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cambiar Contraseña</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="change-password-form">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="current-password" class="form-label">Contraseña Actual</label>
+                            <input type="password" class="form-control" id="current-password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-password" class="form-label">Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="new-password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm-password" class="form-label">Confirmar Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="confirm-password" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="save-password-btn">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deactivate User Modal -->
+    <div class="modal fade" id="deactivateUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Acción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea <span id="action-text">desactivar</span> al usuario <strong id="user-to-deactivate">Nombre Apellido</strong>?</p>
+                    <div class="mb-3">
+                        <label for="deactivation-reason" class="form-label">Razón</label>
+                        <textarea class="form-control" id="deactivation-reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirm-deactivate-btn">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Details Modal -->
+    <div class="modal fade" id="modalDetalleProyecto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Detalles del Proyecto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ID del Proyecto</label>
+                                <p id="detalleProyectoId" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nombre</label>
+                                <p id="detalleProyectoNombre" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">PRST</label>
+                                <p id="detalleProyectoPrst" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Departamento</label>
+                                <p id="detalleProyectoDepartamento" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Municipio</label>
+                                <p id="detalleProyectoMunicipio" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Barrios</label>
+                                <p id="detalleProyectoBarrios" class="form-control-static"></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Creación</label>
+                                <p id="detalleProyectoFechaCreacion" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Inicio</label>
+                                <p id="detalleProyectoFechaInicio" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Finalización</label>
+                                <p id="detalleProyectoFechaFin" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Estado</label>
+                                <p id="detalleProyectoEstado" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Número de Postes</label>
+                                <p id="detalleProyectoPostes" class="form-control-static"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Tipo de Solicitud</label>
+                                <p id="detalleProyectoTipoSolicitud" class="form-control-static"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project History Modal -->
+    <div class="modal fade" id="projectHistoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Historial del Proyecto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha y Hora</th>
+                                    <th>OT</th>
+                                    <th>Estado</th>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="project-history-body">
+                                <tr>
+                                    <td colspan="6" class="text-center">Cargando historial...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="Js/storage.js"></script>
+    <script src="Js/chart.js"></script>
+    <script src="Js/admin.js"></script>
+</body>
+</html>
