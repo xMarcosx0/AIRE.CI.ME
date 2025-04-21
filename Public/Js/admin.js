@@ -143,87 +143,81 @@ function setupEventListeners() {
 
   try {
     // 1. Cerrar sesión
-    const logoutButton = document.getElementById("logout-button")
+    const logoutButton = document.getElementById("logout-button");
     if (logoutButton) {
       logoutButton.addEventListener("click", (e) => {
-        e.preventDefault()
-        console.log("Cerrando sesión")
-        Storage.logout()
-        window.location.href = "login.html"
-      })
+        e.preventDefault();
+        console.log("Cerrando sesión");
+        Storage.logout();
+        window.location.href = "login.html";
+      });
     }
 
     // 2. Mostrar perfil desde el navbar
-    const profileButton = document.getElementById("profile-button")
+    const profileButton = document.getElementById("profile-button");
     if (profileButton) {
       profileButton.addEventListener("click", (e) => {
-        e.preventDefault()
-        console.log("Mostrando perfil")
-        showProfileModal()
-      })
+        e.preventDefault();
+        console.log("Mostrando perfil");
+        showProfileModal();
+      });
     }
 
-    // 3. Cambiar contraseña
-    const changePasswordBtn = document.getElementById("change-password-btn")
+    // 3. Cambiar contraseña - SOLO si el usuario es admin
+    const changePasswordBtn = document.getElementById("change-password-btn");
     if (changePasswordBtn) {
-      changePasswordBtn.addEventListener("click", () => {
-        console.log("Mostrando modal de cambio de contraseña")
-        showChangePasswordModal()
-      })
+      if (currentUser.rol === "admin") {
+        changePasswordBtn.addEventListener("click", () => {
+          console.log("Mostrando modal de cambio de contraseña");
+          showChangePasswordModal();
+        });
+      } else {
+        changePasswordBtn.style.display = "none";
+      }
     }
 
-    // 4. Guardar nueva contraseña
-    const savePasswordBtn = document.getElementById("save-password-btn")
-    if (savePasswordBtn) {
-      savePasswordBtn.addEventListener("click", () => {
-        console.log("Guardando nueva contraseña")
-        saveNewPassword()
-      })
-    }
-
-    // 5. Nuevo usuario
-    const newUserButton = document.getElementById("new-user-button")
+    // 5. Nuevo usuario - SOLO si el usuario es admin
+    const newUserButton = document.getElementById("new-user-button");
     if (newUserButton) {
-      newUserButton.addEventListener("click", () => {
-        console.log("Mostrando formulario de nuevo usuario")
-        showUserModal()
-      })
+      if (currentUser.rol === "admin") {
+        newUserButton.addEventListener("click", () => {
+          console.log("Mostrando formulario de nuevo usuario");
+          showUserModal();
+        });
+      } else {
+        newUserButton.style.display = "none";
+      }
     }
 
-    // 6. Guardar usuario
-    const saveUserButton = document.getElementById("save-user-button")
-    if (saveUserButton) {
-      saveUserButton.addEventListener("click", () => {
-        console.log("Guardando usuario")
-        saveUser()
-      })
+    // 6. Guardar usuario - SOLO si el usuario es admin
+    const saveUserButton = document.getElementById("save-user-button");
+    if (saveUserButton && currentUser.rol !== "admin") {
+      saveUserButton.style.display = "none";
     }
 
-    // 7. Nuevo proyecto
-    const newProjectButton = document.getElementById("new-project-button")
+    // 7. Nuevo proyecto - SOLO si el usuario es admin
+    const newProjectButton = document.getElementById("new-project-button");
     if (newProjectButton) {
-      newProjectButton.addEventListener("click", () => {
-        console.log("Mostrando formulario de nuevo proyecto")
-        showProjectModal()
-      })
+      if (currentUser.rol === "admin") {
+        newProjectButton.addEventListener("click", () => {
+          console.log("Mostrando formulario de nuevo proyecto");
+          showProjectModal();
+        });
+      } else {
+        newProjectButton.style.display = "none";
+      }
     }
 
-    // 8. Guardar proyecto
-    const saveProjectButton = document.getElementById("save-project-button")
-    if (saveProjectButton) {
-      saveProjectButton.addEventListener("click", () => {
-        console.log("Guardando proyecto")
-        saveProject()
-      })
+    // 8. Guardar proyecto - SOLO si el usuario es admin
+    const saveProjectButton = document.getElementById("save-project-button");
+    if (saveProjectButton && currentUser.rol !== "admin") {
+      saveProjectButton.style.display = "none";
     }
 
-    // 9. Guardar cambio de estado
-    const saveStatusButton = document.getElementById("save-status-button")
-    if (saveStatusButton) {
-      saveStatusButton.addEventListener("click", () => {
-        console.log("Guardando cambio de estado")
-        saveProjectStatus()
-      })
+    // 9. Guardar cambio de estado - SOLO si el usuario es admin
+    const saveStatusButton = document.getElementById("save-status-button");
+    if (saveStatusButton && currentUser.rol !== "admin") {
+      saveStatusButton.style.display = "none";
     }
 
     // 10. Aplicar filtros
@@ -394,137 +388,223 @@ function setupToggleUserStatus() {
 }
 
 // Función para configurar las tarjetas del dashboard
+// Función para configurar las tarjetas del dashboard
 function setupDashboardCards() {
   // Tarjeta de usuarios
-  const usersCard = document.getElementById("show-users-card")
+  const usersCard = document.getElementById("show-users-card");
   if (usersCard) {
     usersCard.addEventListener("click", () => {
       // Activar la pestaña de usuarios
-      const usersLink = document.querySelector('a[href="#users"]')
+      const usersLink = document.querySelector('a[href="#users"]');
       if (usersLink) {
-        usersLink.click()
+        usersLink.click();
       }
-    })
+    });
   }
 
   // Tarjeta de proyectos
-  const projectsCard = document.getElementById("show-projects-card")
+  const projectsCard = document.getElementById("show-projects-card");
   if (projectsCard) {
     projectsCard.addEventListener("click", () => {
       // Activar la pestaña de proyectos
-      const projectsLink = document.querySelector('a[href="#projects"]')
+      const projectsLink = document.querySelector('a[href="#projects"]');
       if (projectsLink) {
-        projectsLink.click()
+        projectsLink.click();
+        
+        // Limpiar filtros y mostrar todos los proyectos
+        setTimeout(() => {
+          document.getElementById("filter-status").value = "";
+          document.getElementById("filter-department").value = "";
+          document.getElementById("filter-prst").value = "";
+          document.getElementById("filter-date-type").value = "creacion";
+          document.getElementById("filter-date-from").value = "";
+          document.getElementById("filter-date-to").value = "";
+          filterProjects();
+        }, 100);
       }
-    })
+    });
   }
 
   // Tarjeta de proyectos en gestión
-  const inProgressCard = document.getElementById("show-in-progress-card")
+  const inProgressCard = document.getElementById("show-in-progress-card");
   if (inProgressCard) {
     inProgressCard.addEventListener("click", () => {
-      // Activar la pestaña de dashboard y luego la subpestaña de proyectos en gestión
-      const dashboardLink = document.querySelector('a[href="#dashboard"]')
-      if (dashboardLink) {
-        dashboardLink.click()
+      // Activar la pestaña de proyectos
+      const projectsLink = document.querySelector('a[href="#projects"]');
+      if (projectsLink) {
+        projectsLink.click();
+        
+        // Filtrar solo proyectos en gestión
         setTimeout(() => {
-          const inProgressTab = document.getElementById("in-progress-tab")
-          if (inProgressTab) {
-            inProgressTab.click()
-          }
-        }, 100)
+          document.getElementById("filter-status").value = "";
+          document.getElementById("filter-department").value = "";
+          document.getElementById("filter-prst").value = "";
+          document.getElementById("filter-date-type").value = "creacion";
+          document.getElementById("filter-date-from").value = "";
+          document.getElementById("filter-date-to").value = "";
+          
+          // Aplicar filtro de estado para mostrar solo proyectos en gestión
+          const projects = Storage.getProjects();
+          const filteredProjects = projects.filter(
+            (project) => project.estado !== "Finalizado" && project.estado !== "Completado"
+          );
+          
+          // Actualizar tabla con proyectos filtrados
+          updateProjectsTable(filteredProjects);
+        }, 100);
       }
-    })
+    });
   }
 
   // Tarjeta de proyectos finalizados
-  const completedCard = document.getElementById("show-completed-card")
+  const completedCard = document.getElementById("show-completed-card");
   if (completedCard) {
     completedCard.addEventListener("click", () => {
-      // Activar la pestaña de dashboard y luego la subpestaña de proyectos finalizados
-      const dashboardLink = document.querySelector('a[href="#dashboard"]')
-      if (dashboardLink) {
-        dashboardLink.click()
+      // Activar la pestaña de proyectos
+      const projectsLink = document.querySelector('a[href="#projects"]');
+      if (projectsLink) {
+        projectsLink.click();
+        
+        // Filtrar solo proyectos finalizados
         setTimeout(() => {
-          const completedTab = document.getElementById("completed-tab")
-          if (completedTab) {
-            completedTab.click()
-          }
-        }, 100)
+          document.getElementById("filter-status").value = "";
+          document.getElementById("filter-department").value = "";
+          document.getElementById("filter-prst").value = "";
+          document.getElementById("filter-date-type").value = "creacion";
+          document.getElementById("filter-date-from").value = "";
+          document.getElementById("filter-date-to").value = "";
+          
+          // Aplicar filtro de estado para mostrar solo proyectos finalizados
+          const projects = Storage.getProjects();
+          const filteredProjects = projects.filter(
+            (project) => project.estado === "Finalizado" || project.estado === "Completado"
+          );
+          
+          // Actualizar tabla con proyectos filtrados
+          updateProjectsTable(filteredProjects);
+        }, 100);
       }
-    })
+    });
   }
+}
+
+// Función auxiliar para actualizar la tabla de proyectos
+function updateProjectsTable(projects) {
+  const projectsTableBody = document.getElementById("projects-table-body");
+
+  if (!projectsTableBody) {
+    console.warn("Elemento projects-table-body no encontrado");
+    return;
+  }
+
+  // Limpiar tabla
+  projectsTableBody.innerHTML = "";
+
+  // Si no hay proyectos, mostrar mensaje
+  if (projects.length === 0) {
+    projectsTableBody.innerHTML = `
+      <tr>
+        <td colspan="9" class="text-center">No hay proyectos para mostrar</td>
+      </tr>
+    `;
+    return;
+  }
+
+  // Llenar tabla con proyectos
+  projects.forEach((project) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${project.id || "N/A"}</td>
+      <td>${project.nombre || "Sin nombre"}</td>
+      <td>${project.prstNombre || "N/A"}</td>
+      <td>${project.departamento || "N/A"}</td>
+      <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
+      <td>${formatDate(project.fechaInicio) || "N/A"}</td>
+      <td>${formatDate(project.fechaFin) || "N/A"}</td>
+      <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
+      <td>
+        <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
+          <i class="fas fa-history"></i>
+        </button>
+        ${(project.estado !== "Finalizado" && project.estado !== "Completado") ? 
+          `` : ''}
+      </td>
+    `;
+    projectsTableBody.appendChild(row);
+  });
+
+  // Agregar eventos a los botones
+  addProjectTableEventListeners(projectsTableBody);
 }
 
 // Cargar datos del dashboard
 function loadDashboardData() {
-  console.log("Cargando datos del dashboard")
+  console.log("Cargando datos del dashboard");
 
   try {
     // Obtener datos
-    const users = Storage.getUsers()
-    const projects = Storage.getProjects()
+    const users = Storage.getUsers();
+    const projects = Storage.getProjects();
 
     // Verificar que hay datos
     if (!users || !projects) {
-      throw new Error("No se pudieron cargar los datos de usuarios o proyectos")
+      throw new Error("No se pudieron cargar los datos de usuarios o proyectos");
     }
 
     // Actualizar contadores
-    updateCounters(users, projects)
+    updateCounters(users, projects);
 
     // Cargar gráficos
-    loadCharts(projects)
+    loadCharts(projects);
 
-    // Cargar datos para las pestañas
-    loadInManagementProjects()
-    loadCompletedProjects()
-
-    console.log("Datos del dashboard cargados correctamente")
+    console.log("Datos del dashboard cargados correctamente");
   } catch (error) {
-    console.error("Error al cargar datos del dashboard:", error)
-    alert(`Error al cargar el dashboard: ${error.message}. Por favor, recargue la página.`)
+    console.error("Error al cargar datos del dashboard:", error);
+    alert(`Error al cargar el dashboard: ${error.message}. Por favor, recargue la página.`);
   }
 }
 
 // Función para actualizar contadores
 function updateCounters(users, projects) {
-  console.log("Actualizando contadores")
+  console.log("Actualizando contadores");
 
   try {
     // Total de usuarios
-    const totalUsersElement = document.getElementById("total-users")
+    const totalUsersElement = document.getElementById("total-users");
     if (totalUsersElement) {
-      totalUsersElement.textContent = users.length
+      totalUsersElement.textContent = users.length;
     }
 
     // Total de proyectos
-    const totalProjectsElement = document.getElementById("total-projects")
+    const totalProjectsElement = document.getElementById("total-projects");
     if (totalProjectsElement) {
-      totalProjectsElement.textContent = projects.length
+      totalProjectsElement.textContent = projects.length;
     }
 
     // Proyectos en gestión
-    const inProgressProjectsElement = document.getElementById("in-progress-projects")
+    const inProgressProjectsElement = document.getElementById("in-progress-projects");
     if (inProgressProjectsElement) {
       const inProgressCount = projects.filter(
-        (project) => project.estado !== "Finalizado" && project.estado !== "Completado",
-      ).length
-      inProgressProjectsElement.textContent = inProgressCount
+        (project) => project.estado !== "Finalizado" && project.estado !== "Completado"
+      ).length;
+      inProgressProjectsElement.textContent = inProgressCount;
     }
 
     // Proyectos finalizados
-    const completedProjectsElement = document.getElementById("completed-projects")
+    const completedProjectsElement = document.getElementById("completed-projects");
     if (completedProjectsElement) {
       const completedCount = projects.filter(
-        (project) => project.estado === "Finalizado" || project.estado === "Completado",
-      ).length
-      completedProjectsElement.textContent = completedCount
+        (project) => project.estado === "Finalizado" || project.estado === "Completado"
+      ).length;
+      completedProjectsElement.textContent = completedCount;
     }
 
-    console.log("Contadores actualizados correctamente")
+    console.log("Contadores actualizados correctamente");
   } catch (error) {
-    console.error("Error al actualizar contadores:", error)
+    console.error("Error al actualizar contadores:", error);
   }
 }
 
@@ -665,12 +745,7 @@ function loadProjectsTable() {
                     </button>
                     <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
                         <i class="fas fa-history"></i>
-                    </button>
-                    <button class="btn btn-primary btn-sm change-status-project" data-id="${
-                      project.id
-                    }" title="Cambiar Estado">
-                        <i class="fas fa-exchange-alt"></i>
-                    </button>
+                    
                 </td>
             `
       projectsTableBody.appendChild(row)
@@ -833,35 +908,38 @@ function loadCompletedProjects() {
 // Función para agregar eventos a los botones de las tablas de proyectos
 function addProjectTableEventListeners(tableElement) {
   // Agregar eventos a los botones de ver detalles
-  const viewButtons = tableElement.querySelectorAll(".view-project")
+  const viewButtons = tableElement.querySelectorAll(".view-project");
   viewButtons.forEach((button) => {
     button.addEventListener("click", function () {
-      const projectId = this.getAttribute("data-id")
-      viewProjectDetails(projectId)
-    })
-  })
+      const projectId = this.getAttribute("data-id");
+      viewProjectDetails(projectId);
+    });
+  });
 
   // Agregar eventos a los botones de historial
-  const historyButtons = tableElement.querySelectorAll(".history-project")
+  const historyButtons = tableElement.querySelectorAll(".history-project");
   historyButtons.forEach((button) => {
     button.addEventListener("click", function () {
-      const projectId = this.getAttribute("data-id")
-      showProjectHistory(projectId)
-    })
-  })
+      const projectId = this.getAttribute("data-id");
+      showProjectHistory(projectId);
+    });
+  });
 
-  // Agregar eventos a los botones de cambio de estado
-  const changeStatusButtons = tableElement.querySelectorAll(".change-status-project")
+  // Agregar eventos a los botones de cambio de estado - SOLO si el usuario es admin
+  const changeStatusButtons = tableElement.querySelectorAll(".change-status-project");
   if (changeStatusButtons.length > 0) {
     changeStatusButtons.forEach((button) => {
-      button.addEventListener("click", function () {
-        const projectId = this.getAttribute("data-id")
-        showChangeStatusModal(projectId)
-      })
-    })
+      if (currentUser.rol === "admin") {
+        button.addEventListener("click", function () {
+          const projectId = this.getAttribute("data-id");
+          showChangeStatusModal(projectId);
+        });
+      } else {
+        button.style.display = "none";
+      }
+    });
   }
 }
-
 // Función para cargar las notificaciones
 function loadNotifications() {
   console.log("Cargando notificaciones")
@@ -1212,11 +1290,6 @@ function filterProjects() {
                     </button>
                     <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
                         <i class="fas fa-history"></i>
-                    </button>
-                    <button class="btn btn-primary btn-sm change-status-project" data-id="${
-                      project.id
-                    }" title="Cambiar Estado">
-                        <i class="fas fa-exchange-alt"></i>
                     </button>
                 </td>
             `
