@@ -219,6 +219,7 @@ function setupEventListeners() {
         clearHighlightButton.addEventListener('click', clearHighlight);
     }
 
+    
     // 10. Aplicar filtros
     const applyFiltersButton = document.getElementById("apply-filters")
     if (applyFiltersButton) {
@@ -351,11 +352,7 @@ function setupEventListeners() {
   }
 }
 
-// En admin.js, agregar al final de setupEventListeners()
-document.getElementById("mark-all-read")?.addEventListener("click", async (e) => {
-  e.preventDefault()
-  await markAllNotificationsAsRead()
-})
+document.getElementById("save-user-button")?.addEventListener("click", saveUser);
 
 // Función para marcar todas como leídas
 async function markAllNotificationsAsRead() {
@@ -375,21 +372,21 @@ async function markAllNotificationsAsRead() {
 
 // Función para mostrar/ocultar contraseña
 function setupPasswordToggle() {
-  const togglePasswordButton = document.getElementById("toggle-password")
-  const passwordInput = document.getElementById("user-password")
+  const togglePasswordButton = document.getElementById("toggle-password");
+  const passwordInput = document.getElementById("user-password");
 
   if (togglePasswordButton && passwordInput) {
-    togglePasswordButton.addEventListener("click", function () {
-      const type = passwordInput.getAttribute("type") === "password" ? "text" : "password"
-      passwordInput.setAttribute("type", type)
-
+    togglePasswordButton.addEventListener("click", function() {
+      const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+      passwordInput.setAttribute("type", type);
+      
       // Cambiar el icono
-      const icon = this.querySelector("i")
+      const icon = this.querySelector("i");
       if (icon) {
-        icon.classList.toggle("fa-eye")
-        icon.classList.toggle("fa-eye-slash")
+        icon.classList.toggle("fa-eye");
+        icon.classList.toggle("fa-eye-slash");
       }
-    })
+    });
   }
 }
 
@@ -1473,127 +1470,184 @@ function showUserModal(userId = null) {
 
 // Función para guardar un usuario
 function saveUser() {
-  console.log("Guardando usuario")
+  console.log("Guardando usuario");
 
   try {
-    const userIdInput = document.getElementById("user-id")
-    const userNombreInput = document.getElementById("user-nombre")
-    const userApellidoInput = document.getElementById("user-apellido")
-    const userUsuarioInput = document.getElementById("user-usuario")
-    const userEmailInput = document.getElementById("user-email")
-    const userPasswordInput = document.getElementById("user-password")
-    const userRolInput = document.getElementById("user-rol")
-    const userActivoInput = document.getElementById("user-activo")
+    // Obtener elementos del formulario
+    const formElements = {
+      id: document.getElementById("user-id"),
+      nombre: document.getElementById("user-nombre"),
+      apellido: document.getElementById("user-apellido"),
+      usuario: document.getElementById("user-usuario"),
+      email: document.getElementById("user-email"),
+      password: document.getElementById("user-password"),
+      rol: document.getElementById("user-rol"),
+      activo: document.getElementById("user-activo"),
+      // Campos específicos de PRST
+      prstNombre: document.getElementById("user-prst-nombre"),
+      cedula: document.getElementById("user-cedula"),
+      matricula: document.getElementById("user-matricula"),
+      celular: document.getElementById("user-celular"),
+      direccion: document.getElementById("user-direccion"),
+      barrio: document.getElementById("user-barrio"),
+      ciudad: document.getElementById("user-ciudad")
+    };
 
-    const userId = userIdInput.value
-    const userNombre = userNombreInput.value
-    const userApellido = userApellidoInput.value
-    const userUsuario = userUsuarioInput.value
-    const userEmail = userEmailInput.value
-    const userPassword = userPasswordInput.value
-    const userRol = userRolInput.value
-    const userActivo = userActivoInput.value === "true"
-
-    // Validar campos
-    if (!userNombre || !userApellido || !userUsuario || !userEmail || !userRol) {
-      alert("Por favor, complete todos los campos obligatorios.")
-      return
+    // Validar campos requeridos
+    const requiredFields = ['nombre', 'apellido', 'usuario', 'email', 'rol'];
+    const missingFields = requiredFields.filter(field => !formElements[field].value.trim());
+    
+    if (missingFields.length > 0) {
+      alert(`Por favor complete los campos obligatorios: ${missingFields.join(', ')}`);
+      return;
     }
 
-    // Crear objeto usuario
-    const user = {
-      id: userId || generateId(),
-      nombre: userNombre,
-      apellido: userApellido,
-      usuario: userUsuario,
-      correo: userEmail,
-      rol: userRol,
-      activo: userActivo,
+    // Validar contraseña para nuevos usuarios
+    if (!formElements.id.value && !formElements.password.value) {
+      alert("Por favor ingrese una contraseña para el nuevo usuario.");
+      return;
     }
 
-    // Si es un nuevo usuario, agregar contraseña
-    if (!userId) {
-      if (!userPassword) {
-        alert("Por favor, ingrese una contraseña para el nuevo usuario.")
-        return
-      }
-      user.password = userPassword
-    } else {
-      // Si se está editando un usuario, mantener la contraseña existente si no se proporciona una nueva
-      const existingUser = Storage.getUserById(userId)
-      user.password = userPassword || existingUser.password
+    // Crear objeto con los datos del usuario
+    const userData = {
+      id: formElements.id.value || generateId(),
+      nombre: formElements.nombre.value.trim(),
+      apellido: formElements.apellido.value.trim(),
+      usuario: formElements.usuario.value.trim(),
+      correo: formElements.email.value.trim(),
+      rol: formElements.rol.value,
+      activo: formElements.activo.value === "true"
+    };
+
+    // Solo actualizar contraseña si se proporcionó una nueva
+    if (formElements.password.value) {
+      userData.password = formElements.password.value;
     }
 
-    // Agregar campos específicos para PRST
-    if (userRol === "prst") {
-      user.nombrePRST = document.getElementById("user-prst-nombre").value
-      user.cedula = document.getElementById("user-cedula").value
-      user.matriculaProfesional = document.getElementById("user-matricula").value
-      user.celular = document.getElementById("user-celular").value
-      user.direccion = document.getElementById("user-direccion").value
-      user.barrio = document.getElementById("user-barrio").value
-      user.ciudad = document.getElementById("user-ciudad").value
+    // Agregar campos específicos para PRST si el rol es PRST
+    if (formElements.rol.value === "prst") {
+      userData.nombrePRST = formElements.prstNombre.value.trim();
+      userData.cedula = formElements.cedula.value.trim();
+      userData.matriculaProfesional = formElements.matricula.value.trim();
+      userData.celular = formElements.celular.value.trim();
+      userData.direccion = formElements.direccion.value.trim();
+      userData.barrio = formElements.barrio.value.trim();
+      userData.ciudad = formElements.ciudad.value.trim();
     }
 
     // Guardar usuario
-    Storage.saveUser(user)
+    Storage.saveUser(userData);
 
     // Cerrar modal
-    const userModal = bootstrap.Modal.getInstance(document.getElementById("userModal"))
-    userModal.hide()
+    const userModal = bootstrap.Modal.getInstance(document.getElementById("userModal"));
+    if (userModal) {
+      userModal.hide();
+    }
 
     // Recargar tabla de usuarios
-    loadUsersTable()
+    loadUsersTable();
 
-    console.log("Usuario guardado correctamente")
-    alert("Usuario guardado correctamente.")
+    console.log("Usuario guardado correctamente");
+    alert("Usuario guardado correctamente.");
   } catch (error) {
-    console.error("Error al guardar usuario:", error)
-    alert("Error al guardar el usuario. Por favor, inténtelo de nuevo.")
+    console.error("Error al guardar usuario:", error);
+    alert("Error al guardar el usuario. Por favor, inténtelo de nuevo.");
   }
 }
 
 // Función para ver detalles de un usuario
 function viewUserDetails(userId) {
-  console.log(`Mostrando detalles del usuario con ID: ${userId}`)
+  console.log(`Mostrando detalles del usuario con ID: ${userId}`);
 
   try {
-    const user = Storage.getUserById(userId)
+    const user = Storage.getUserById(userId);
 
     if (!user) {
-      console.error(`No se encontró el usuario con ID: ${userId}`)
-      alert("No se encontró el usuario. Por favor, recargue la página.")
-      return
+      console.error(`No se encontró el usuario con ID: ${userId}`);
+      alert("No se encontró el usuario. Por favor, recargue la página.");
+      return;
     }
 
     // Mostrar modal de perfil con los datos del usuario
-    const profileModal = document.getElementById("profileModal")
-    const profileNombre = document.getElementById("profile-nombre")
-    const profileApellido = document.getElementById("profile-apellido")
-    const profileUsuario = document.getElementById("profile-usuario")
-    const profileCorreo = document.getElementById("profile-correo")
-    const profileRol = document.getElementById("profile-rol")
+    const profileModal = document.getElementById("profileModal");
+    const modalElements = {
+      nombre: document.getElementById("modal-profile-nombre"),
+      apellido: document.getElementById("modal-profile-apellido"),
+      usuario: document.getElementById("modal-profile-usuario"),
+      correo: document.getElementById("modal-profile-correo"),
+      rol: document.getElementById("modal-profile-rol"),
+      activo: document.getElementById("modal-profile-activo"),
+      password: document.getElementById("modal-profile-password"),
+      togglePassword: document.getElementById("toggle-modal-password"),
+      passwordLabel: document.querySelector('label[for="modal-profile-password"]')
+    };
 
-    if (!profileModal || !profileNombre || !profileApellido || !profileUsuario || !profileCorreo || !profileRol) {
-      console.error("Elementos del perfil no encontrados")
-      return
+    // Verificar que todos los elementos existen
+    if (!profileModal || Object.values(modalElements).some(el => !el)) {
+      console.error("Elementos del perfil no encontrados");
+      return;
     }
 
     // Llenar datos del perfil
-    profileNombre.textContent = user.nombre || "No disponible"
-    profileApellido.textContent = user.apellido || "No disponible"
-    profileUsuario.textContent = user.usuario || "No disponible"
-    profileCorreo.textContent = user.correo || "No disponible"
-    profileRol.textContent = user.rol || "No disponible"
+    modalElements.nombre.textContent = user.nombre || "No disponible";
+    modalElements.apellido.textContent = user.apellido || "No disponible";
+    modalElements.usuario.textContent = user.usuario || "No disponible";
+    modalElements.correo.textContent = user.correo || "No disponible";
+    modalElements.rol.textContent = user.rol || "No disponible";
+    modalElements.activo.textContent = user.activo ? "Activo" : "Inactivo";
+
+    // Mostrar contraseña solo para administradores
+    if (currentUser.rol === "admin") {
+      modalElements.password.value = user.password || "No disponible";
+      modalElements.password.style.display = "block";
+      modalElements.passwordLabel.style.display = "block";
+      modalElements.togglePassword.style.display = "block";
+
+      // Configurar toggle para mostrar contraseña
+      modalElements.togglePassword.addEventListener("click", function() {
+        const type = modalElements.password.getAttribute("type") === "password" ? "text" : "password";
+        modalElements.password.setAttribute("type", type);
+        
+        const icon = this.querySelector("i");
+        if (icon) {
+          icon.classList.toggle("fa-eye");
+          icon.classList.toggle("fa-eye-slash");
+        }
+      });
+    } else {
+      // Ocultar campo de contraseña para no administradores
+      modalElements.password.style.display = "none";
+      modalElements.passwordLabel.style.display = "none";
+      modalElements.togglePassword.style.display = "none";
+    }
+
+    // Mostrar campos adicionales para PRST si el usuario es PRST
+    const prstFieldsContainer = document.getElementById("modal-prst-fields");
+    if (prstFieldsContainer) {
+      if (user.rol === "prst") {
+        prstFieldsContainer.classList.remove("d-none");
+        
+        // Llenar campos específicos de PRST
+        document.getElementById("modal-profile-prst-nombre").textContent = user.nombrePRST || "No disponible";
+        document.getElementById("modal-profile-cedula").textContent = user.cedula || "No disponible";
+        document.getElementById("modal-profile-matricula").textContent = user.matriculaProfesional || "No disponible";
+        document.getElementById("modal-profile-celular").textContent = user.celular || "No disponible";
+        document.getElementById("modal-profile-direccion").textContent = user.direccion || "No disponible";
+        document.getElementById("modal-profile-barrio").textContent = user.barrio || "No disponible";
+        document.getElementById("modal-profile-ciudad").textContent = user.ciudad || "No disponible";
+      } else {
+        prstFieldsContainer.classList.add("d-none");
+      }
+    }
 
     // Mostrar modal
-    const modal = new bootstrap.Modal(profileModal)
-    modal.show()
+    const modal = new bootstrap.Modal(profileModal);
+    modal.show();
 
-    console.log("Detalles del usuario mostrados correctamente")
+    console.log("Detalles del usuario mostrados correctamente");
   } catch (error) {
-    console.error("Error al mostrar detalles del usuario:", error)
-    alert("Error al mostrar los detalles del usuario. Por favor, inténtelo de nuevo.")
+    console.error("Error al mostrar detalles del usuario:", error);
+    alert("Error al mostrar los detalles del usuario. Por favor, inténtelo de nuevo.");
   }
 }
 
@@ -2413,21 +2467,7 @@ function loadProjectsByStatusChart(period = "month") {
   }
 }
 
-// Función auxiliar para oscurecer colores (necesaria para los bordes)
-function darkenColor(color, percent) {
-  // Convert HEX to RGB
-  let r = parseInt(color.substring(1, 3), 16);
-  let g = parseInt(color.substring(3, 5), 16);
-  let b = parseInt(color.substring(5, 7), 16);
-
-  // Darken each component
-  r = Math.floor(r * (100 - percent) / 100);
-  g = Math.floor(g * (100 - percent) / 100);
-  b = Math.floor(b * (100 - percent) / 100);
-
-  // Convert back to HEX
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-}
+// (Duplicate definition removed to avoid conflicts)
 
 // Función para cargar gráfico de proyectos por departamento
 function loadProjectsByDepartmentChart() {
