@@ -326,3 +326,12 @@ body {
 .btn-toolbar {
   align-items: center;
 }
+
+.modal-document-history {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.document-action-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}

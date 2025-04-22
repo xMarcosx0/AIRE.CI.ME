@@ -1654,76 +1654,219 @@ function viewUserDetails(userId) {
 
 // Función para mostrar los detalles de un proyecto
 function viewProjectDetails(projectId) {
-  console.log(`Mostrando detalles del proyecto con ID: ${projectId}`)
+  console.log(`Mostrando detalles del proyecto con ID: ${projectId}`);
 
   try {
-    const project = Storage.getProjectById(projectId)
+    const project = Storage.getProjectById(projectId);
+    const users = Storage.getUsers();
 
     if (!project) {
-      console.error(`No se encontró el proyecto con ID: ${projectId}`)
-      alert("No se encontró el proyecto. Por favor, recargue la página.")
-      return
+      console.error(`No se encontró el proyecto con ID: ${projectId}`);
+      alert("No se encontró el proyecto. Por favor, recargue la página.");
+      return;
     }
 
-    // Obtener referencias a los elementos del modal
-    const projectDetailsModal = document.getElementById("modalDetalleProyecto")
-    const detailProjectId = document.getElementById("detalleProyectoId")
-    const detailProjectNombre = document.getElementById("detalleProyectoNombre")
-    const detailProjectPrst = document.getElementById("detalleProyectoPrst")
-    const detailProjectDepartamento = document.getElementById("detalleProyectoDepartamento")
-    const detailProjectMunicipio = document.getElementById("detalleProyectoMunicipio")
-    const detailProjectBarrios = document.getElementById("detalleProyectoBarrios")
-    const detailProjectFechaCreacion = document.getElementById("detalleProyectoFechaCreacion")
-    const detailProjectFechaInicio = document.getElementById("detalleProyectoFechaInicio")
-    const detailProjectFechaFin = document.getElementById("detalleProyectoFechaFin")
-    const detailProjectEstado = document.getElementById("detalleProyectoEstado")
-    const detailProjectPostes = document.getElementById("detalleProyectoPostes")
-    const detailProjectTipoSolicitud = document.getElementById("detalleProyectoTipoSolicitud")
-    const detailProjectDocumentacion = document.getElementById("detalleProyectoDocumentacion")
+    // Función mejorada para obtener información del usuario asignado
+    const getAssignedUserInfo = (userId) => {
+      if (!userId) return { name: "No asignado", role: "" };
+      
+      const user = users.find(u => u.id === userId.toString()); // Asegurar comparación de strings
+      if (!user) return { name: "Usuario no encontrado", role: "" };
+      
+      return {
+        name: `${user.nombre || ""} ${user.apellido || ""}`.trim() || "Usuario sin nombre",
+        role: user.rol ? `(${user.rol})` : ""
+      };
+    };
 
-    // Llenar datos básicos
-    if (detailProjectId) detailProjectId.textContent = project.id || "N/A"
-    if (detailProjectNombre) detailProjectNombre.textContent = project.nombre || "Sin nombre"
-    if (detailProjectPrst) detailProjectPrst.textContent = project.prstNombre || "N/A"
-    if (detailProjectDepartamento) detailProjectDepartamento.textContent = project.departamento || "N/A"
-    if (detailProjectMunicipio) detailProjectMunicipio.textContent = project.municipio || "N/A"
-    if (detailProjectBarrios) detailProjectBarrios.textContent = project.barrios ? project.barrios.join(", ") : "N/A"
-    if (detailProjectFechaCreacion) detailProjectFechaCreacion.textContent = formatDate(project.fechaCreacion) || "N/A"
-    if (detailProjectFechaInicio) detailProjectFechaInicio.textContent = formatDate(project.fechaInicio) || "N/A"
-    if (detailProjectFechaFin) detailProjectFechaFin.textContent = formatDate(project.fechaFin) || "N/A"
-    if (detailProjectEstado) detailProjectEstado.textContent = project.estado || "No definido"
-    if (detailProjectPostes) detailProjectPostes.textContent = project.numPostes || "N/A"
-    if (detailProjectTipoSolicitud) detailProjectTipoSolicitud.textContent = project.tipoSolicitud || "N/A"
+    // Obtener información de asignación mejorada
+    const assignedInfo = getAssignedUserInfo(project.asignadoA || project.analistaId || project.brigadaId);
+    const asignacionCompleta = `${assignedInfo.name} ${assignedInfo.role}`.trim();
 
-    // Mostrar documentación si existe
-    if (detailProjectDocumentacion) {
-      if (project.documentacion && project.documentacion.length > 0) {
-        let html = '<div class="documentacion-list">'
-        project.documentacion.forEach((doc) => {
-          html += `
-            <div class="documento-item mb-2 p-2 border rounded">
-              <strong>${doc.tipo || "Documento"}:</strong> 
-              <a href="${doc.url || "#"}" target="_blank" class="ms-2">${doc.nombre || "Ver documento"}</a>
-              ${doc.observaciones ? `<div class="text-muted small mt-1">${doc.observaciones}</div>` : ""}
-            </div>
-          `
-        })
-        html += "</div>"
-        detailProjectDocumentacion.innerHTML = html
+    // Llenar información general
+    document.getElementById("detalleProyectoId").textContent = project.id || "N/A";
+    document.getElementById("detalleProyectoNombre").textContent = project.nombre || "Sin nombre";
+    document.getElementById("detalleProyectoPRST").textContent = project.prstNombre || "N/A";
+    document.getElementById("detalleProyectoDireccionInicial").textContent = project.direccionInicial || "N/A";
+    document.getElementById("detalleProyectoDireccionFinal").textContent = project.direccionFinal || "N/A";
+    document.getElementById("detalleProyectoBarrios").textContent = project.barrios ? project.barrios.join(", ") : "N/A";
+
+    // Llenar detalles adicionales
+    document.getElementById("detalleProyectoMunicipio").textContent = project.municipio || "N/A";
+    document.getElementById("detalleProyectoDepartamento").textContent = project.departamento || "N/A";
+    document.getElementById("detalleProyectoNumeroPostes").textContent = project.numPostes || "N/A";
+    document.getElementById("detalleProyectoFechaInicio").textContent = formatDate(project.fechaInicio) || "N/A";
+    document.getElementById("detalleProyectoFechaFin").textContent = formatDate(project.fechaFin) || "N/A";
+    document.getElementById("detalleProyectoPuntoConexion").textContent = project.puntoConexion || "N/A";
+
+    // Llenar estado del proyecto
+    document.getElementById("detalleProyectoEstado").innerHTML = `<span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span>`;
+    document.getElementById("detalleProyectoAsignado").innerHTML = asignacionCompleta;
+    document.getElementById("detalleProyectoFechaAsignacion").textContent = formatDate(project.fechaAsignacion) || "N/A";
+    document.getElementById("detalleProyectoObservaciones").textContent = project.observaciones || "Sin observaciones";
+
+    // Llenar documentos - Versión mejorada con manejo de casos nulos
+    const tablaDocumentos = document.getElementById("tablaDocumentosDetalle");
+    tablaDocumentos.innerHTML = "";
+
+    if (project.documentacion && Array.isArray(project.documentacion)) {
+      if (project.documentacion.length > 0) {
+        project.documentacion.forEach((doc, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>
+              <strong>${doc.tipo || "Documento sin tipo"}</strong><br>
+              <small class="text-muted">${doc.nombre || "Sin nombre"}</small>
+            </td>
+            <td>
+              <span class="badge ${doc.aprobado ? 'bg-success' : 'bg-warning'}">
+                ${doc.aprobado ? 'Aprobado' : 'Pendiente'}
+              </span>
+            </td>
+            <td>
+              ${doc.url ? `<a href="${doc.url}" target="_blank" class="btn btn-sm btn-primary me-1" title="Ver documento">
+                <i class="fas fa-eye"></i>
+              </a>` : ''}
+              <button class="btn btn-sm btn-secondary" title="Ver historial" onclick="showDocumentHistory('${projectId}', ${index})">
+                <i class="fas fa-history"></i>
+              </button>
+            </td>
+          `;
+          tablaDocumentos.appendChild(row);
+        });
       } else {
-        detailProjectDocumentacion.innerHTML = '<div class="text-muted">No hay documentación adjunta</div>'
+        tablaDocumentos.innerHTML = `
+          <tr>
+            <td colspan="3" class="text-center text-muted">No hay documentos registrados</td>
+          </tr>
+        `;
       }
+    } else {
+      tablaDocumentos.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center text-muted">No hay información de documentos disponible</td>
+        </tr>
+      `;
     }
 
     // Mostrar modal
-    const modal = new bootstrap.Modal(projectDetailsModal)
-    modal.show()
+    const modal = new bootstrap.Modal(document.getElementById("modalDetalleProyecto"));
+    modal.show();
 
-    console.log("Detalles del proyecto mostrados correctamente")
+    console.log("Detalles del proyecto mostrados correctamente");
   } catch (error) {
-    console.error("Error al mostrar detalles del proyecto:", error)
-    alert("Error al mostrar los detalles del proyecto. Por favor, inténtelo de nuevo.")
+    console.error("Error al mostrar detalles del proyecto:", error);
+    alert("Error al mostrar los detalles del proyecto. Por favor, inténtelo de nuevo.");
   }
+}
+
+// Función auxiliar para formatear fechas
+function formatDate(dateString) {
+  if (!dateString) return null;
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch (error) {
+    console.error("Error formateando fecha:", error);
+    return "Fecha inválida";
+  }
+}
+
+// Función auxiliar para obtener clase CSS según estado
+function getBadgeClass(estado) {
+  const statusClasses = {
+    'Nuevo': 'bg-secondary',
+    'En Proceso de Viabilidad': 'bg-info',
+    'En Asignación': 'bg-primary',
+    'En Gestión': 'bg-warning',
+    'Finalizado': 'bg-success',
+    'Completado': 'bg-success',
+    'Documentación Errada': 'bg-danger'
+  };
+  return statusClasses[estado] || 'bg-secondary';
+}
+
+// Función auxiliar para mostrar el historial de un documento
+function showDocumentHistory(projectId, docIndex) {
+  const project = Storage.getProjectById(projectId);
+  if (!project || !project.documentacion || !project.documentacion[docIndex]) {
+    alert("No se encontró el documento solicitado");
+    return;
+  }
+
+  const doc = project.documentacion[docIndex];
+  const modal = document.getElementById("documentHistoryModal");
+  
+  if (!modal) {
+    // Crear modal dinámicamente si no existe
+    const modalHTML = `
+      <div class="modal fade" id="documentHistoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title">Historial de Documento</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body modal-document-history" id="documentHistoryContent">
+              <!-- Contenido se llenará dinámicamente -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  }
+
+  // Llenar contenido
+  const content = document.getElementById("documentHistoryContent");
+  content.innerHTML = `
+    <h6>${doc.tipo || "Documento"} - ${doc.nombre || "Sin nombre"}</h6>
+    <table class="table table-sm">
+      <tr><th style="width: 30%">Estado actual:</th>
+          <td><span class="badge ${doc.aprobado ? 'bg-success' : 'bg-warning'}">
+              ${doc.aprobado ? 'Aprobado' : 'Pendiente'}
+          </span></td></tr>
+      <tr><th>Última actualización:</th>
+          <td>${doc.ultimaActualizacion ? formatDateTime(doc.ultimaActualizacion) : 'N/A'}</td></tr>
+      <tr><th>Subido por:</th>
+          <td>${doc.subidoPor || 'N/A'}</td></tr>
+    </table>
+    
+    <h6 class="mt-4">Historial de cambios</h6>
+    <div class="list-group">
+      ${doc.historial && doc.historial.length > 0 ? 
+        doc.historial.map(item => `
+          <div class="list-group-item">
+            <div class="d-flex justify-content-between">
+              <strong>${item.accion || "Cambio no especificado"}</strong>
+              <small class="text-muted">${formatDateTime(item.fecha)}</small>
+            </div>
+            <div class="d-flex justify-content-between">
+              <small>Por: ${item.usuario || "Sistema"}</small>
+              ${item.estado ? `<span class="badge ${item.estado === 'Aprobado' ? 'bg-success' : 'bg-warning'}">
+                ${item.estado}
+              </span>` : ''}
+            </div>
+            ${item.observaciones ? `<p class="mt-2 mb-0">${item.observaciones}</p>` : ''}
+          </div>
+        `).join('') : `
+        <div class="list-group-item text-center text-muted">
+          No hay historial registrado para este documento
+        </div>`
+      }
+    </div>
+  `;
+
+  // Mostrar modal
+  const bsModal = new bootstrap.Modal(document.getElementById("documentHistoryModal"));
+  bsModal.show();
 }
 
 // Función para mostrar el historial del proyecto

@@ -558,86 +558,80 @@
         </div>
     </div>
 
-    <!-- Project Modal -->
-    <div class="modal fade" id="projectModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="project-title">Nuevo Proyecto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Modal para ver detalles del proyecto -->
+  <div class="modal fade" id="modalDetalleProyecto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Detalle del Proyecto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información General</h6>
+                        <table class="table table-sm">
+                            <!-- Todos los campos de información general -->
+                            <tr><th>OT AIR-E:</th><td id="detalleProyectoId"></td></tr>
+                            <tr><th>Nombre:</th><td id="detalleProyectoNombre"></td></tr>
+                            <tr><th>PRST:</th><td id="detalleProyectoPRST"></td></tr>
+                            <tr><th>Dirección Inicial:</th><td id="detalleProyectoDireccionInicial"></td></tr>
+                            <tr><th>Dirección Final:</th><td id="detalleProyectoDireccionFinal"></td></tr>
+                            <tr><th>Barrios:</th><td id="detalleProyectoBarrios"></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Detalles Adicionales</h6>
+                        <table class="table table-sm">
+                            <!-- Todos los campos de detalles adicionales -->
+                            <tr><th>Municipio:</th><td id="detalleProyectoMunicipio"></td></tr>
+                            <tr><th>Departamento:</th><td id="detalleProyectoDepartamento"></td></tr>
+                            <tr><th>N° Postes:</th><td id="detalleProyectoNumeroPostes"></td></tr>
+                            <tr><th>Fecha Inicio:</th><td id="detalleProyectoFechaInicio"></td></tr>
+                            <tr><th>Fecha Fin:</th><td id="detalleProyectoFechaFin"></td></tr>
+                            <tr><th>Punto Conexión:</th><td id="detalleProyectoPuntoConexion"></td></tr>
+                        </table>
+                    </div>
                 </div>
-                <form id="project-form">
-                    <div class="modal-body">
-                        <input type="hidden" id="project-id">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label for="project-nombre" class="form-label">Nombre del Proyecto</label>
-                                    <input type="text" class="form-control" id="project-nombre" required>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="project-prst" class="form-label">PRST</label>
-                                    <select class="form-select" id="project-prst" required>
-                                        <option value="">Seleccione un PRST</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="project-departamento" class="form-label">Departamento</label>
-                                    <select class="form-select" id="project-departamento" required>
-                                        <option value="">Seleccione</option>
-                                        <option value="Atlántico">Atlántico</option>
-                                        <option value="La Guajira">La Guajira</option>
-                                        <option value="Magdalena">Magdalena</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="project-fecha-creacion" class="form-label">Fecha Creación</label>
-                                    <input type="date" class="form-control" id="project-fecha-creacion" required>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="project-estado" class="form-label">Estado</label>
-                                    <select class="form-select" id="project-estado" required>
-                                        <option value="Nuevo">Nuevo</option>
-                                        <option value="En Proceso de Viabilidad">En Proceso de Viabilidad</option>
-                                        <option value="En Gestión">En Gestión</option>
-                                        <option value="Finalizado">Finalizado</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="project-fecha-inicio" class="form-label">Fecha Inicio</label>
-                                    <input type="date" class="form-control" id="project-fecha-inicio">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="project-fecha-fin" class="form-label">Fecha Fin</label>
-                                    <input type="date" class="form-control" id="project-fecha-fin">
-                                </div>
-                            </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h6>Estado del Proyecto</h6>
+                        <table class="table table-sm">
+                            <tr><th>Estado:</th><td id="detalleProyectoEstado"></td></tr>
+                            <tr><th>Asignado a:</th><td id="detalleProyectoAsignado"></td></tr>
+                            <tr><th>Fecha Asignación:</th><td id="detalleProyectoFechaAsignacion"></td></tr>
+                            <tr><th>Observaciones:</th><td id="detalleProyectoObservaciones"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h6>Documentos</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Documento</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaDocumentosDetalle">
+                                    <!-- Se llenará dinámicamente -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-primary" id="save-project-button">Guardar</button>
-                    </div>
-                </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Modal de Perfil -->
 <!-- Modal de Perfil -->

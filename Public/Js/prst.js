@@ -78,9 +78,9 @@ const availableDates = {
 
 // Tipos de solicitud
 const tiposSolicitud = {
-  SEV: "SEV: Nuevo Proyecto a Construir",
-  SDR: "SDR: Desmonte de Proyecto Existente",
-  SIPRST: "SIPRST: Mantenimiento a Red Existente",
+  SEV: "Solicitud de Estudio de Viabilidad (SEV): Nuevo Proyecto a Construir",
+  SDR: "Solicitud de Desmonte de Redes (SDR): Desmonte de Proyecto Existente",
+  SIPRST: "Solicitud de Intervenciones PRST (SIPRST): Mantenimiento a Red Existente",
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -189,7 +189,7 @@ function showTypeConfirmationModal(tipo) {
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <p>¿Está seguro que desea crear una solicitud de tipo <strong>${tiposSolicitud[tipo]}</strong>?</p>
+              <p>¿Está seguro que desea crear una solicitud de tipo <br> <strong>${tiposSolicitud[tipo]}</strong>?</p>
               <p class="text-muted small">Por favor verifique que esta es la opción correcta antes de continuar.</p>
             </div>
             <div class="modal-footer">
@@ -1931,9 +1931,9 @@ function formatTipoSolicitud(tipo) {
   if (!tipo) return "N/A"
 
   const tiposSolicitud = {
-    SEV: "(SEV): Nuevo Proyecto a Construir",
-    SDR: "(SDR): Desmonte de Proyecto Existente",
-    SIPRST: "(SIPRST): Mantenimiento a Red Existente",
+    SEV: "Solicitud de Estudio de Viabilidad (SEV): Nuevo Proyecto a Construir",
+    SDR: "Solicitud de Desmonte de Redes (SDR): Desmonte de Proyecto Existente",
+    SIPRST: "Solicitud de Intervenciones PRST (SIPRST): Mantenimiento a Red Existente",
   }
 
   return tiposSolicitud[tipo] || tipo
