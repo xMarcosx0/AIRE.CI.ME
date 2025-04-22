@@ -1,3 +1,10 @@
+/**
+ * Opens the modal to display project details.
+ * Populates the modal with the project's information and documents.
+ * 
+ * @param {string} projectId - The ID of the project to display details for.
+ */
+
 // coordinador.js - Funcionalidades para el rol de Coordinador
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -10,7 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Inicializar variables globales
   let currentProject = null
-  const currentAction = null
 
   // Cargar datos del usuario
   loadUserData()
@@ -775,53 +781,86 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  // Fix the view project button functionality
+  // Modal de detalle del proyecto
   function abrirModalDetalleProyecto(projectId) {
-    console.log(`Abriendo modal de detalle para proyecto: ${projectId}`)
+    console.log(`Abriendo modal de detalle para proyecto: ${projectId}`);
+    console.log("Datos completos del proyecto:", Storage.getProjectById(projectId));
 
-    const project = Storage.getProjectById(projectId)
+    const project = Storage.getProjectById(projectId);
     if (!project) {
-      mostrarMensaje("Error", "No se pudo encontrar el proyecto.")
-      return
+      mostrarMensaje("Error", "No se pudo encontrar el proyecto.");
+      return;
     }
 
-    // Llenar datos del proyecto en el modal
-    document.getElementById("detalleProyectoId").textContent = project.id || "N/A"
-    document.getElementById("detalleProyectoNombre").textContent = project.nombre || "Sin nombre"
-    document.getElementById("detalleProyectoPRST").textContent = project.prstNombre || "No definido"
-    document.getElementById("detalleProyectoMunicipio").textContent = project.municipio || "No definido"
-    document.getElementById("detalleProyectoDepartamento").textContent = project.departamento || "No definido"
-    document.getElementById("detalleProyectoEstado").innerHTML =
-      `<span class="badge ${getBadgeClass(project.estado)}">${project.estado}</span>`
+    // Set content for elements that exist in the HTML
+    document.getElementById("detalleProyectoId").textContent = project.id || "N/A";
+    document.getElementById("detalleProyectoNombre").textContent = project.nombre || "Sin nombre";
+    document.getElementById("detalleProyectoPRST").textContent = project.prstNombre || "No definido";
+    document.getElementById("detalleProyectoDireccionInicial").textContent = project.direccionInicial || "No definida";
+    document.getElementById("detalleProyectoDireccionFinal").textContent = project.direccionFinal || "No definida";
+    document.getElementById("detalleProyectoBarrios").textContent = project.barrios?.join(", ") || "No definidos";
+    document.getElementById("detalleProyectoMunicipio").textContent = project.municipio || "No definido";
+    document.getElementById("detalleProyectoDepartamento").textContent = project.departamento || "No definido";
 
-    // Mostrar información de asignación
-    let asignadoA = "No asignado"
-    if (project.analistaId) {
-      asignadoA = `Analista: ${project.analistaNombre || "No especificado"}`
-    } else if (project.brigadaId) {
-      asignadoA = `Brigada: ${project.brigadaNombre || "No especificado"}`
-    }
-    document.getElementById("detalleProyectoAsignado").textContent = asignadoA
+    // Mostrar número de postes - manejar diferentes nombres de campo
+    const numPostes = project.numeroPostes || project.numPostes || project.cantidadPostes || "No definido";
+    document.getElementById("detalleProyectoNumeroPostes").textContent = numPostes;
 
-    // Mostrar fechas
-    document.getElementById("detalleProyectoFechaCreacion").textContent = project.fechaCreacion
-      ? formatDateTime(project.fechaCreacion)
-      : "N/A"
-    document.getElementById("detalleProyectoFechaAsignacion").textContent = project.fechaAsignacion
-      ? formatDateTime(project.fechaAsignacion)
-      : "N/A"
+    document.getElementById("detalleProyectoFechaInicio").textContent = formatDate(project.fechaInicio) || "No definida";
+    document.getElementById("detalleProyectoFechaFin").textContent = formatDate(project.fechaFin) || "No definida";
+    document.getElementById("detalleProyectoPuntoConexion").textContent = project.puntoConexion || "No definido";
+    document.getElementById("detalleProyectoEstado").innerHTML = `<span class="badge ${getBadgeClass(project.estado)}">${project.estado}</span>`;
+    document.getElementById("detalleProyectoAsignado").textContent = project.analistaNombre || project.brigadaNombre || "No asignado";
+    document.getElementById("detalleProyectoFechaAsignacion").textContent = formatDateTime(project.fechaAsignacion) || "No definida";
+    document.getElementById("detalleProyectoObservaciones").textContent = project.observaciones || "No hay observaciones";
 
-    // Mostrar observaciones si existen
-    const observacionesElement = document.getElementById("detalleProyectoObservaciones")
-    if (project.observaciones) {
-      observacionesElement.textContent = project.observaciones
+    // Mostrar documentos - verificar estructura
+    // Mostrar documentos - verificar estructura
+    const tablaDocumentosDetalle = document.getElementById("tablaDocumentosDetalle");
+    tablaDocumentosDetalle.innerHTML = "";
+
+    // Verificar si hay documentos y tienen la estructura correcta
+    if (project.documentos && Array.isArray(project.documentos) && project.documentos.length > 0) {
+      project.documentos.forEach((doc) => {
+        // Asegurarse que el documento tenga al menos un nombre y estado
+        const docNombre = doc.nombre || "Documento sin nombre";
+        const docEstado = doc.estado || "No definido";
+        const docUrl = doc.url || null;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${docNombre}</td>
+          <td><span class="badge ${getBadgeClass(docEstado)}">${docEstado}</span></td>
+          <td>
+            ${docUrl 
+              ? `<a href="${docUrl}" target="_blank" class="btn btn-sm btn-primary">Ver</a>`
+              : '<span class="text-muted">No disponible</span>'
+            }
+          </td>
+        `;
+        tablaDocumentosDetalle.appendChild(row);
+      });
     } else {
-      observacionesElement.textContent = "No hay observaciones"
+      tablaDocumentosDetalle.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center">No hay documentos disponibles</td>
+        </tr>
+      `;
     }
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById("modalDetalleProyecto"));
+    modal.show();
+  }
 
-    // Mostrar el modal
-    const modal = new bootstrap.Modal(document.getElementById("modalDetalleProyecto"))
-    modal.show()
+  // Helper function to format date without time
+  function formatDate(dateString) {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   }
 
   // Fix the view history button functionality
@@ -830,43 +869,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const project = Storage.getProjectById(projectId)
     if (!project) {
-      mostrarMensaje("Error", "No se pudo encontrar el proyecto.")
-      return
+        mostrarMensaje("Error", "No se pudo encontrar el proyecto.")
+        return
     }
 
-    // Obtener historial del proyecto
     const historial = project.historial || []
-
-    // Llenar tabla de historial
-    const historialTableBody = document.getElementById("historialProyectoTableBody")
+    const historialTableBody = document.getElementById("tablaHistorialProyecto") // Correct ID
     historialTableBody.innerHTML = ""
 
     if (historial.length === 0) {
-      historialTableBody.innerHTML = `
-        <tr>
-          <td colspan="4" class="text-center">No hay registros en el historial</td>
-        </tr>
-      `
+        historialTableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center">No hay registros en el historial</td>
+            </tr>
+        `
     } else {
-      // Ordenar historial por fecha (más recientes primero)
-      historial.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+        historial.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
 
-      historial.forEach((item) => {
-        const row = document.createElement("tr")
-        row.innerHTML = `
-          <td>${formatDateTime(item.fecha)}</td>
-          <td><span class="badge ${getBadgeClass(item.estado)}">${item.estado}</span></td>
-          <td>${item.usuario || "No especificado"}</td>
-        <td>${item.descripcion || item.comentario || "No hay descripción"}</td>
-      `
-        historialTableBody.appendChild(row)
-      })
+        historial.forEach((item) => {
+            const row = document.createElement("tr")
+            row.innerHTML = `
+                <td>${formatDateTime(item.fecha)}</td>
+                <td><span class="badge ${getBadgeClass(item.estado)}">${item.estado}</span></td>
+                <td>${item.usuario || "No especificado"}</td>
+                <td>${item.rol || "No especificado"}</td>
+                <td>${item.comentario || "No hay descripción"}</td>
+            `
+            historialTableBody.appendChild(row)
+        })
     }
 
-    // Mostrar el modal
     const modal = new bootstrap.Modal(document.getElementById("modalHistorialProyecto"))
     modal.show()
-  }
+}
 
   function abrirModalRevisarVerificacion(projectId) {
     console.log(`Abriendo modal de revisar verificación para proyecto: ${projectId}`)

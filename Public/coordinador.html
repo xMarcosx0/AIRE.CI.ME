@@ -560,123 +560,77 @@
   <!-- Modal para ver detalles del proyecto -->
   <div class="modal fade" id="modalDetalleProyecto" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title">Detalle del Proyecto</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Detalle del Proyecto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información General</h6>
+                        <table class="table table-sm">
+                            <!-- Todos los campos de información general -->
+                            <tr><th>OT AIR-E:</th><td id="detalleProyectoId"></td></tr>
+                            <tr><th>Nombre:</th><td id="detalleProyectoNombre"></td></tr>
+                            <tr><th>PRST:</th><td id="detalleProyectoPRST"></td></tr>
+                            <tr><th>Dirección Inicial:</th><td id="detalleProyectoDireccionInicial"></td></tr>
+                            <tr><th>Dirección Final:</th><td id="detalleProyectoDireccionFinal"></td></tr>
+                            <tr><th>Barrios:</th><td id="detalleProyectoBarrios"></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Detalles Adicionales</h6>
+                        <table class="table table-sm">
+                            <!-- Todos los campos de detalles adicionales -->
+                            <tr><th>Municipio:</th><td id="detalleProyectoMunicipio"></td></tr>
+                            <tr><th>Departamento:</th><td id="detalleProyectoDepartamento"></td></tr>
+                            <tr><th>N° Postes:</th><td id="detalleProyectoNumeroPostes"></td></tr>
+                            <tr><th>Fecha Inicio:</th><td id="detalleProyectoFechaInicio"></td></tr>
+                            <tr><th>Fecha Fin:</th><td id="detalleProyectoFechaFin"></td></tr>
+                            <tr><th>Punto Conexión:</th><td id="detalleProyectoPuntoConexion"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h6>Estado del Proyecto</h6>
+                        <table class="table table-sm">
+                            <tr><th>Estado:</th><td id="detalleProyectoEstado"></td></tr>
+                            <tr><th>Asignado a:</th><td id="detalleProyectoAsignado"></td></tr>
+                            <tr><th>Fecha Asignación:</th><td id="detalleProyectoFechaAsignacion"></td></tr>
+                            <tr><th>Observaciones:</th><td id="detalleProyectoObservaciones"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h6>Documentos</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Documento</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaDocumentosDetalle">
+                                    <!-- Se llenará dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
         </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-md-6">
-              <h6>Información General</h6>
-              <table class="table table-sm">
-                <tr>
-                  <th>OT AIR-E:</th>
-                  <td id="detalleProyectoId"></td>
-                </tr>
-                <tr>
-                  <th>Nombre del Proyecto:</th>
-                  <td id="detalleProyectoNombre"></td>
-                </tr>
-                <tr>
-                  <th>PRST:</th>
-                  <td id="detalleProyectoPRST"></td>
-                </tr>
-                <tr>
-                  <th>Dirección Inicial:</th>
-                  <td id="detalleProyectoDireccionInicial"></td>
-                </tr>
-                <tr>
-                  <th>Dirección Final:</th>
-                  <td id="detalleProyectoDireccionFinal"></td>
-                </tr>
-                <tr>
-                  <th>Barrios:</th>
-                  <td id="detalleProyectoBarrios"></td>
-                </tr>
-              </table>
-            </div>
-            <div class="col-md-6">
-              <h6>Detalles Adicionales</h6>
-              <table class="table table-sm">
-                <tr>
-                  <th>Municipio:</th>
-                  <td id="detalleProyectoMunicipio"></td>
-                </tr>
-                <tr>
-                  <th>Departamento:</th>
-                  <td id="detalleProyectoDepartamento"></td>
-                </tr>
-                <tr>
-                  <th>Número de Postes:</th>
-                  <td id="detalleProyectoNumeroPostes"></td>
-                </tr>
-                <tr>
-                  <th>Fecha Inicio:</th>
-                  <td id="detalleProyectoFechaInicio"></td>
-                </tr>
-                <tr>
-                  <th>Fecha Fin:</th>
-                  <td id="detalleProyectoFechaFin"></td>
-                </tr>
-                <tr>
-                  <th>Punto de Conexión Eléctrico:</th>
-                  <td id="detalleProyectoPuntoConexion"></td>
-                </tr>
-              </table>
-            </div>
-          </div>
-         
-          <div class="row mt-3">
-            <div class="col-md-12">
-              <h6>Estado del Proyecto</h6>
-              <table class="table table-sm">
-                <tr>
-                  <th>Estado Actual:</th>
-                  <td id="detalleProyectoEstado"></td>
-                </tr>
-                <tr>
-                  <th>Asignado a:</th>
-                  <td id="detalleProyectoAsignado"></td>
-                </tr>
-                <tr>
-                  <th>Fecha de Asignación:</th>
-                  <td id="detalleProyectoFechaAsignacion"></td>
-                </tr>
-                <tr>
-                  <th>Observaciones de Ejecutiva:</th>
-                  <td id="detalleProyectoObservaciones"></td>
-                </tr>
-              </table>
-            </div>
-          </div>
-         
-          <div class="row mt-3">
-            <div class="col-md-12">
-              <h6>Documentos</h6>
-              <div class="table-responsive">
-                <table class="table table-bordered">
-                  <thead>
-                    <tr>
-                      <th>Documento</th>
-                      <th>Estado</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tablaDocumentosDetalle">
-                    <!-- Se llenará dinámicamente -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        </div>
-      </div>
     </div>
-  </div>
+</div>
  
   <!-- Modal para ver historial del proyecto -->
   <div class="modal fade" id="modalHistorialProyecto" tabindex="-1" aria-hidden="true">
