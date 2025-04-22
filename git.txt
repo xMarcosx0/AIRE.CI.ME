@@ -1,6 +1,6 @@
 git status
 git add .
-git commit -m "mensaje"
+git commit -m "Correción para que se mostrara de manera exitosa el flujo diario de proyectos"
 git push
 git pull
 git clone https://github.com/MarcosMarquez/Aire21-04.git

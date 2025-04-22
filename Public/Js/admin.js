@@ -2506,28 +2506,44 @@ function loadProjectsFlowChart(period = "month") {
     const projects = Storage.getProjects();
     const ctx = document.getElementById('projects-flow-chart').getContext('2d');
     
-    // Agrupar proyectos por período de tiempo
+    // Filtrar proyectos que tienen fecha de creación
+    const projectsWithDate = projects.filter(p => p.fechaCreacion);
+    
+    // Preparar datos según el período seleccionado
     let labels = [];
     let data = [];
     
-    const now = new Date();
-    const filteredProjects = projects.filter(p => p.fechaCreacion);
-    
     if (period === "day") {
-      // Últimos 7 días
-      labels = Array.from({length: 7}, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - i));
-        return formatDate(date.toISOString(), true);
+      // Últimos 7 días con datos
+      const daysToShow = 7;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Crear array de los últimos 7 días
+      labels = Array.from({length: daysToShow}, (_, i) => {
+        const date = new Date(today);
+        date.setDate(date.getDate() - (daysToShow - 1 - i));
+        return date;
       });
       
-      data = labels.map(label => {
-        const dateStr = label.split('/').reverse().join('-');
-        return filteredProjects.filter(p => p.fechaCreacion.startsWith(dateStr)).length;
+      // Formatear etiquetas como "Lun 12", "Mar 13", etc.
+      const formattedLabels = labels.map(date => {
+        const dayName = date.toLocaleDateString('es-ES', { weekday: 'short' });
+        const dayNumber = date.getDate();
+        return `${dayName.charAt(0).toUpperCase() + dayName.slice(1, 3)} ${dayNumber}`;
       });
+      
+      // Contar proyectos por día
+      data = labels.map(date => {
+        const dateStr = date.toISOString().split('T')[0];
+        return projectsWithDate.filter(p => p.fechaCreacion.startsWith(dateStr)).length;
+      });
+      
+      labels = formattedLabels;
+      
     } else if (period === "week") {
       // Últimas 12 semanas
-      labels = Array.from({length: 12}, (_, i) => `Semana ${12 - i}`);
+      labels = Array.from({length: 12}, (_, i) => `Sem ${12 - i}`);
       
       data = labels.map((_, i) => {
         const weekStart = new Date();
@@ -2535,11 +2551,12 @@ function loadProjectsFlowChart(period = "month") {
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
         
-        return filteredProjects.filter(p => {
+        return projectsWithDate.filter(p => {
           const projectDate = new Date(p.fechaCreacion);
           return projectDate >= weekStart && projectDate <= weekEnd;
         }).length;
       });
+      
     } else if (period === "month") {
       // Últimos 12 meses
       labels = Array.from({length: 12}, (_, i) => {
@@ -2554,19 +2571,20 @@ function loadProjectsFlowChart(period = "month") {
         const adjustedMonth = month < 0 ? month + 12 : month;
         const adjustedYear = month < 0 ? year - 1 : year;
         
-        return filteredProjects.filter(p => {
+        return projectsWithDate.filter(p => {
           const projectDate = new Date(p.fechaCreacion);
           return projectDate.getMonth() === adjustedMonth && 
                  projectDate.getFullYear() === adjustedYear;
         }).length;
       });
+      
     } else if (period === "year") {
       // Últimos 5 años
       const currentYear = new Date().getFullYear();
       labels = Array.from({length: 5}, (_, i) => (currentYear - 4 + i).toString());
       
       data = labels.map(year => {
-        return filteredProjects.filter(p => {
+        return projectsWithDate.filter(p => {
           const projectDate = new Date(p.fechaCreacion);
           return projectDate.getFullYear() === parseInt(year);
         }).length;
@@ -2608,7 +2626,15 @@ function loadProjectsFlowChart(period = "month") {
           tooltip: {
             callbacks: {
               label: function(context) {
-                return `${context.parsed.y} proyectos creados`;
+                return `${context.parsed.y} proyecto(s) creado(s)`;
+              },
+              title: function(context) {
+                if (period === "day") {
+                  const date = new Date();
+                  date.setDate(date.getDate() - (6 - context[0].dataIndex));
+                  return date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                }
+                return context[0].label;
               }
             }
           }
@@ -2621,15 +2647,16 @@ function loadProjectsFlowChart(period = "month") {
               text: 'Cantidad de Proyectos'
             },
             ticks: {
-              precision: 0
+              precision: 0,
+              stepSize: 1 // Asegura que solo muestre números enteros
             }
           },
           x: {
             title: {
               display: true,
-              text: period === "day" ? 'Día' : 
-                    period === "week" ? 'Semana' : 
-                    period === "month" ? 'Mes' : 'Año'
+              text: period === "day" ? 'Días' : 
+                    period === "week" ? 'Semanas' : 
+                    period === "month" ? 'Meses' : 'Años'
             }
           }
         }
