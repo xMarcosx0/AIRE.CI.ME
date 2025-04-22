@@ -937,7 +937,7 @@ function showProjectHistory(projectId) {
                   <tr>
                     <th>Fecha y Hora</th>
                     <th>Estado</th>
-                    <th>Usuario</th>
+                    <th>Modificado por:</th>
                     <th>Rol</th>
                     <th>Comentario</th>
                   </tr>
