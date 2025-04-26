@@ -6,7 +6,7 @@ console.log("Admin.js loaded")
 // Check if we're on the admin page
 function isAdminPage() {
   return document.getElementById("projects-by-status-chart") !== null
-}
+} // Ensure this closing brace matches an opening brace above
 console.log("Is admin page:", isAdminPage())
 
 // admin.js - Funcionalidades para el panel de administración
@@ -219,7 +219,6 @@ function setupEventListeners() {
         clearHighlightButton.addEventListener('click', clearHighlight);
     }
 
-    
     // 10. Aplicar filtros
     const applyFiltersButton = document.getElementById("apply-filters")
     if (applyFiltersButton) {
@@ -243,7 +242,6 @@ function setupEventListeners() {
     timePeriodButtons.forEach((button) => {
       button.addEventListener("click", function () {
         const period = this.getAttribute("data-period")
-        const chartContainer = this.closest(".card").querySelector(".chart-container canvas")
 
         // Quitar clase activa de todos los botones del mismo grupo
         const buttonGroup = this.closest(".btn-group")
@@ -256,11 +254,16 @@ function setupEventListeners() {
         // Agregar clase activa al botón clickeado
         this.classList.add("active")
 
-        // Actualizar el gráfico correspondiente
-        if (chartContainer.id === "projects-flow-chart") {
-          loadProjectsFlowChart(period)
-        } else if (chartContainer.id === "projects-by-status-chart") {
+        // Actualizar gráficos según el período seleccionado
+        const chartType = this.getAttribute("data-chart")
+        if (chartType === "status") {
           loadProjectsByStatusChart(period)
+        } else if (chartType === "department") {
+          loadProjectsByDepartmentChart()
+        } else if (chartType === "flow") {
+          loadProjectsFlowChart(period)
+        } else if (chartType === "prst") {
+          loadProjectsByPRSTChart(period)
         }
       })
     })
@@ -345,6 +348,14 @@ function setupEventListeners() {
         loadNotifications()
       })
     }
+
+    // 17. Botones de período de tiempo para gráfico de tipo de solicitud
+    document.querySelectorAll('[data-chart="request-type"].time-period-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const period = this.getAttribute('data-period');
+        loadProjectsByRequestTypeChart(period);
+      });
+    });
 
     console.log("Listeners de eventos configurados correctamente")
   } catch (error) {
@@ -1249,8 +1260,150 @@ function populateDateSelectors() {
     console.error("Error al popular selectores de fecha:", error)
   }
 }
+// Función para cargar gráfico de proyectos por PRST
+function loadProjectsByPRSTChart(period = "month") {
+  console.log("Cargando gráfico de proyectos por PRST con periodo:", period);
 
-// Función para filtrar proyectos
+  try {
+    const projects = Storage.getProjects();
+    const ctx = document.getElementById('projects-by-prst-chart').getContext('2d');
+
+    // Filtrar proyectos según el período seleccionado
+    const filteredProjects = filterProjectsByPeriod(projects, period, 'fechaCreacion');
+
+    // Contar proyectos por PRST
+    const prstCounts = {};
+    filteredProjects.forEach(project => {
+      const prst = project.prstNombre || 'No definido';
+      prstCounts[prst] = (prstCounts[prst] || 0) + 1;
+    });
+
+    // Ordenar PRSTs por cantidad (de mayor a menor) y limitar a los primeros 10
+    const sortedPRSTs = Object.entries(prstCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    // Preparar datos para el gráfico
+    const labels = sortedPRSTs.map(item => item[0]);
+    const data = sortedPRSTs.map(item => item[1]);
+
+    // Generar colores dinámicos
+    const backgroundColors = labels.map((_, i) => {
+      const hue = (i * 360 / labels.length) % 360;
+      return `hsl(${hue}, 70%, 60%)`;
+    });
+
+    // Destruir el gráfico anterior si existe
+    if (charts['projects-by-prst-chart']) {
+      charts['projects-by-prst-chart'].destroy();
+    }
+
+    // Crear nuevo gráfico
+    charts['projects-by-prst-chart'] = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Proyectos por PRST',
+          data: data,
+          backgroundColor: backgroundColors,
+          borderColor: backgroundColors.map(color => darkenColor(color, 20)),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              generateLabels: function(chart) {
+                return chart.data.labels.map((label, index) => ({
+                  text: label,
+                  fillStyle: chart.data.datasets[0].backgroundColor[index],
+                  hidden: false,
+                  index: index
+                }));
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
+                const percentage = ((context.raw / total) * 100).toFixed(1);
+                return `${context.label}: ${context.raw} proyectos (${percentage}%)`;
+              }
+            }
+          }
+        },
+        cutout: '50%',
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const prstName = charts['projects-by-prst-chart'].data.labels[index];
+            
+            // Activar la pestaña de proyectos
+            const projectsLink = document.querySelector('a[href="#projects"]');
+            if (projectsLink) {
+              projectsLink.click();
+              
+              // Filtrar proyectos por PRST
+              setTimeout(() => {
+                document.getElementById("filter-prst").value = prstName;
+                document.getElementById("filter-status").value = "";
+                document.getElementById("filter-department").value = "";
+                document.getElementById("filter-date-type").value = "creacion";
+                document.getElementById("filter-date-from").value = "";
+                document.getElementById("filter-date-to").value = "";
+                filterProjects();
+              }, 100);
+            }
+          }
+        }
+      }
+    });
+
+    console.log("Gráfico de proyectos por PRST cargado correctamente");
+  } catch (error) {
+    console.error("Error al cargar gráfico de proyectos por PRST:", error);
+  }
+}
+
+// Modificar la función loadCharts para incluir la nueva gráfica
+function loadCharts(projects) {
+  console.log("Cargando gráficos");
+
+  try {
+    // Verificar que Chart está disponible
+    if (typeof Chart === "undefined") {
+      console.error("Chart.js no está disponible");
+      return;
+    }
+
+    // Cargar gráfico de proyectos por estado
+    loadProjectsByStatusChart("month");
+
+    // Cargar gráfico de proyectos por departamento
+    loadProjectsByDepartmentChart();
+
+    // Cargar gráfico de flujo de proyectos
+    loadProjectsFlowChart("month");
+
+    // Cargar gráfico de proyectos por PRST
+    loadProjectsByPRSTChart("month");
+
+    console.log("Gráficos cargados correctamente");
+  } catch (error) {
+    console.error("Error al cargar gráficos:", error);
+  }
+}
+
+
+
+// Agregar la función al objeto window para que sea accesible
+window.loadProjectsByPRSTChart = loadProjectsByPRSTChart;
 function filterProjects() {
   console.log("Filtrando proyectos")
 
@@ -1307,7 +1460,10 @@ function filterProjects() {
     // Filtrar por PRST si está seleccionado
     const prst = filterPRST.value
     if (prst) {
-      projects = projects.filter((project) => project.prstNombre === prst)
+      projects = projects.filter((project) => 
+        project.prstNombre && 
+        project.prstNombre.trim().toLowerCase() === prst.trim().toLowerCase()
+      );
     }
 
     // Filtrar por departamento si está seleccionado
@@ -1665,6 +1821,23 @@ function viewProjectDetails(projectId) {
       alert("No se encontró el proyecto. Por favor, recargue la página.");
       return;
     }
+
+    // Calcular progreso del censo si existe información de postes
+    let progressPercentage = 0;
+    if (project.numPostes && project.postesCensados) {
+      progressPercentage = Math.round((project.postesCensados / project.numPostes) * 100);
+    }
+
+    // Mostrar información del progreso en el modal
+    document.getElementById("detalleProyectoProgresoCenso").innerHTML = `
+      <div class="progress mt-2">
+        <div class="progress-bar" role="progressbar" style="width: ${progressPercentage}%" 
+             aria-valuenow="${progressPercentage}" aria-valuemin="0" aria-valuemax="100">
+          ${progressPercentage}%
+        </div>
+      </div>
+      <small class="text-muted">${project.postesCensados || 0} de ${project.numPostes || 0} postes censados</small>
+    `;
 
     // Función mejorada para obtener información del usuario asignado
     const getAssignedUserInfo = (userId) => {
@@ -2852,6 +3025,158 @@ function loadProjectsFlowChart(period = "month") {
   }
 }
 
+// Función para cargar gráfico de proyectos por tipo de solicitud
+function loadProjectsByRequestTypeChart(period = "month") {
+  console.log("Cargando gráfico de proyectos por tipo de solicitud con periodo:", period);
+  
+  try {
+    const canvas = document.getElementById('projects-by-request-type-chart');
+    if (!canvas) {
+      console.warn("Canvas para gráfico de tipos de solicitud no encontrado");
+      return;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    const projects = Storage.getProjects();
+    
+    // Filtrar proyectos según el período seleccionado
+    const filteredProjects = filterProjectsByPeriod(projects, period, 'fechaCreacion');
+    
+    // Contar proyectos por tipo de solicitud
+    const requestTypeCounts = {
+      'SEV': 0,
+      'SDR': 0,
+      'SIPRST': 0,
+    };
+    
+    filteredProjects.forEach(project => {
+      const tipo = project.tipoSolicitud || 'No definido';
+      if (tipo in requestTypeCounts) {
+        requestTypeCounts[tipo]++;
+      } else {
+        requestTypeCounts['No definido']++;
+      }
+    });
+    
+    // Preparar datos para el gráfico
+    const labels = [
+      'Solicitud de Estudio de Viabilidad (SEV)', 
+      'Solicitud de Desmonte de Redes (SDR)', 
+      'Solicitud de Intervenciones PRST (SIPRST)',
+    ];
+    const data = [
+      requestTypeCounts['SEV'],
+      requestTypeCounts['SDR'],
+      requestTypeCounts['SIPRST'],
+      requestTypeCounts['No definido']
+    ];
+    
+    // Colores para cada tipo
+    const backgroundColors = [
+      'rgba(54, 162, 235, 0.7)', // Azul para SEV
+      'rgba(255, 99, 132, 0.7)',  // Rojo para SDR
+      'rgba(75, 192, 192, 0.7)',  // Verde para SIPRST
+      'rgba(201, 203, 207, 0.7)'  // Gris para No definido
+    ];
+    
+    // Destruir el gráfico anterior si existe
+    if (charts['projects-by-request-type-chart']) {
+      charts['projects-by-request-type-chart'].destroy();
+    }
+    
+    // Crear nuevo gráfico
+    charts['projects-by-request-type-chart'] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Proyectos por Tipo de Solicitud',
+          data: data,
+          backgroundColor: backgroundColors,
+          borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const total = filteredProjects.length;
+                const percentage = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : 0;
+                return `${context.parsed.y} proyectos (${percentage}%)`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Cantidad de Proyectos'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Tipo de Solicitud'
+            }
+          }
+        }
+      }
+    });
+    
+    console.log("Gráfico de proyectos por tipo de solicitud cargado correctamente");
+  } catch (error) {
+    console.error("Error al cargar gráfico de proyectos por tipo de solicitud:", error);
+  }
+}
+
+// Actualizar la función loadCharts para incluir el nuevo gráfico
+// Modificar la función loadCharts
+function loadCharts(projects) {
+  console.log("Cargando gráficos");
+
+  try {
+    if (typeof Chart === "undefined") {
+      console.error("Chart.js no está disponible");
+      return;
+    }
+
+    // Verificar que los elementos del DOM existen antes de intentar crear gráficos
+    if (document.getElementById('projects-by-status-chart')) {
+      loadProjectsByStatusChart("month");
+    }
+
+    if (document.getElementById('projects-by-department-chart')) {
+      loadProjectsByDepartmentChart();
+    }
+
+    if (document.getElementById('projects-flow-chart')) {
+      loadProjectsFlowChart("month");
+    }
+
+    if (document.getElementById('projects-by-prst-chart')) {
+      loadProjectsByPRSTChart("month");
+    }
+
+    // Solo cargar este gráfico si el elemento existe
+    if (document.getElementById('projects-by-request-type-chart')) {
+      loadProjectsByRequestTypeChart("month");
+    }
+
+    console.log("Gráficos cargados correctamente");
+  } catch (error) {
+    console.error("Error al cargar gráficos:", error);
+  }
+}
+
 // Funciones auxiliares para los gráficos
 
 function filterProjectsByPeriod(projects, period, dateField) {
@@ -2932,6 +3257,8 @@ function formatDate(dateString, short = false) {
     return "Fecha inválida";
   }
 }
+
+
 
 // Exportar funciones para que puedan ser utilizadas por chart.js
 window.loadProjectsByStatusChart = loadProjectsByStatusChart

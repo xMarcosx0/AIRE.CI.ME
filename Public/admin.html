@@ -65,6 +65,7 @@
                     <h1 class="h2">Panel de Administración</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         
+                        
 <div class="dropdown">
     <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
       <i class="fas fa-bell"></i>
@@ -82,7 +83,7 @@
                         
                         <div class="dropdown ms-2">
                             <button class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="https://via.placeholder.com/30" class="rounded-circle me-2" width="30" height="30">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZmZmZmZmIj48cGF0aCBkPSJNMTIgMEM1LjM3MyAwIDAgNS4zNzMgMCAxMnM1LjM3MyAxMiAxMiAxMiAxMi01LjM3MyAxMi0xMlMxOC42MjcgMCAxMiAwem0wIDVjMS42NTQgMCAzIDEuMzQ2IDMgM3MtMS4zNDYgMy0zIDMtMy0xLjM0Ni0zLTNzMS4zNDYtMyAzLTN6bTAgMTMuNWMtMi43MzkgMC01LjIxMy0xLjE5LTYuOTQ1LTMuMTk0QzUuNDEgMTMuNjEzIDguNTA0IDEzIDEyIDEzYzMuNDk2IDAgNi41OS42MTMgOC45NDUgMS44MDZDMTcuMjEzIDE3LjMxIDE0LjczOSAxOC41IDEyIDE4LjV6Ii8+PC9zdmc+" class="rounded-circle me-2" width="30" height="30">
                                 <span id="user-name">Admin</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
@@ -168,7 +169,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <div class="card mb-4">
                                     <div class="card-header">
                                         <div class="d-flex justify-content-between align-items-center">
@@ -187,8 +188,48 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">Proyectos por PRST</h5>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary time-period-btn active" data-period="month" data-chart="prst">Mensual</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary time-period-btn" data-period="year" data-chart="prst">Anual</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="projects-by-prst-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                         </div>
-
+                        <div class="row">
+                            <div class="col-md-12">
+                              <div class="card mb-12">
+                                <div class="card-header">
+                                  <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Proyectos por Tipo de Solicitud</h5>
+                                    <div class="btn-group">
+                                      <button type="button" class="btn btn-sm btn-outline-secondary time-period-btn active" data-period="month" data-chart="request-type">Mensual</button>
+                                      <button type="button" class="btn btn-sm btn-outline-secondary time-period-btn" data-period="year" data-chart="request-type">Anual</button>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="card-body">
+                                  <div class="chart-container">
+                                    <!-- AQUÍ VA EL CANVAS FALTANTE -->
+                                    <canvas id="projects-by-request-type-chart"></canvas>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        
                         
                     </div>
 
@@ -214,6 +255,9 @@
                                         <th>Rol</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
+                                        <div class="row">
+                                            
+                                        </div>
                                     </tr>
                                 </thead>
                                 <tbody id="users-table-body">
@@ -284,7 +328,7 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-6">
+                                        <div class="col-md-3">
                                             <div class="mb-3">
                                                 <label for="filter-prst" class="form-label">PRST</label>
                                                 <select class="form-select" id="filter-prst">
@@ -292,7 +336,7 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-3">
                                             <div class="mb-3">
                                                 <label for="filter-department" class="form-label">Departamento</label>
                                                 <select class="form-select" id="filter-department">
@@ -303,11 +347,25 @@
                                                 </select>
                                             </div>
                                         </div>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="mb-4">
+                                                    <label for="filter-request-type" class="form-label">Tipo de Solicitud</label>
+                                                    <select class="form-select" id="filter-request-type">
+                                                        <option value="">Todos</option>
+                                                        <option value="SEV">Solicitud de Estudio de Viabilidad (SEV)</option>
+                                                        <option value="SDR">Solicitud de Desmonte de Redes (SDR)</option>
+                                                        <option value="SIPRST">Solicitud de Intervenciones PRST (SIPRST)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>    
                                     </div>
                                     <div class="text-end">
                                         <button type="button" class="btn btn-primary" id="apply-filters">Aplicar Filtros</button>
                                         <button type="reset" class="btn btn-outline-secondary">Limpiar</button>
                                     </div>
+                                    
                                 </form>
                             </div>
                         </div>
@@ -606,6 +664,11 @@
                     </div>
                 </div>
                 
+                <tr>
+                    <th>Progreso del Censo:</th>
+                    <td colspan="3" id="detalleProyectoProgresoCenso"></td>
+                </tr>
+
                 <div class="row mt-3">
                     <div class="col-md-12">
                         <h6>Documentos</h6>

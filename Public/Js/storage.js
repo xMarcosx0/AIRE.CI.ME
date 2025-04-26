@@ -254,7 +254,7 @@ const Storage = {
             "C&W NETWORK",
             "INVERSIONES RODRIGUEZ MEJIA",
           ],
-          activo: true,
+          activo: false,
         },
         {
           id: "6",
