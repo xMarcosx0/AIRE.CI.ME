@@ -1,6 +1,11 @@
 git status
 git add .
-git commit -m "primer comit"
+git commit -m ""
 git push
 git pull
-git clone https://github.com/MarcosMarquez/Aire21-04.git
+git clone https://github.com/xMarcosx0/AIRE.CI.ME.git
+git remote -v
+git remote remove origin
+git remote add origin ""
+git brach -M main
+git push -u origin main
