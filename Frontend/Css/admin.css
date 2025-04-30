@@ -338,3 +338,18 @@ body {
   height: 400px;
   width: 100%;
 }
+
+/* Agrega esto al archivo admin.css */
+#pole-heights-container input {
+  width: 100%;
+}
+
+#createProjectModal .modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.highlighted-project {
+  background-color: rgba(13, 110, 253, 0.15) !important;
+  transition: background-color 0.3s ease;
+}

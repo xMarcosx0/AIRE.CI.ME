@@ -1,7 +1,47 @@
 // Public/Js/admin.js - Funcionalidades para el panel de administración
 
+
+
 // Add this at the beginning of the file to help with debugging
 console.log("Admin.js loaded")
+
+// Mapeo de departamentos a municipios
+const departmentMunicipalities = {
+  "Atlántico": ["Barranquilla", "Baranoa", "Campo de la Cruz", "Candelaria", "Galapa", "Juan de Acosta", "Luruaco", "Malambo", "Manati", "Palmar de varela", "Piojo", "Polonuevo", "Ponedera", "Puerto Colombia", "Repelon", "Sabanagrande", "Sabanalarga", "Santa Lucia", "Santo Tomas", "Soledad", "Suan", "Tubara", "Usiacuri"],
+  "La Guajira": ["Riohacha", "Albania", "Barrancas", "Dibulla", "Distraccion", "El Molino", "Fonseca", "Hatonuevo", "La Jagua del Pilar", "Maicao", "Manaure", "San Juan del Cesar", "Uribia", "Urumita", "Villanueva"],
+  "Magdalena": ["Santa Marta", "Aracataca", "Cerro de San Antonio", "Chibolo", "Cienaga", "Concordia", "El Piñon", "El Reten", "Fundacion", "Pedraza", "Pivijay", "Plato", "Puebloviejo", "Remolino", "Salamina", "Sitionuevo", "Tenerife", "Zapayan", "Zona Bananera"]
+};
+
+
+
+
+// Función para cargar municipios según departamento seleccionado
+function loadMunicipalitiesByDepartment() {
+  const departmentSelect = document.getElementById("project-department");
+  const municipalitySelect = document.getElementById("project-municipality");
+  
+  if (!departmentSelect || !municipalitySelect) return;
+
+  // Limpiar select de municipios
+  municipalitySelect.innerHTML = '<option value="">Seleccione un municipio</option>';
+
+  const selectedDepartment = departmentSelect.value;
+  if (!selectedDepartment) return;
+
+  // Obtener municipios para el departamento seleccionado
+  const municipalities = departmentMunicipalities[selectedDepartment] || [];
+  
+  // Llenar select con municipios
+  municipalities.forEach(municipality => {
+    const option = document.createElement("option");
+    option.value = municipality;
+    option.textContent = municipality;
+    municipalitySelect.appendChild(option);
+  });
+}
+
+// Agregar event listener al select de departamento
+document.getElementById("project-department")?.addEventListener("change", loadMunicipalitiesByDepartment);
 
 // Check if we're on the admin page
 function isAdminPage() {
@@ -77,6 +117,8 @@ document.addEventListener("DOMContentLoaded", () => {
     populatePRSTSelects()
     extractAvailableDates()
     populateDateSelectors()
+    
+setupPoleHeightControls();
 
     // Configurar botones de navegación
     setupBackToDashboard()
@@ -158,60 +200,75 @@ function initializeComponents() {
 }
 
 // Configurar listeners de eventos
+// Configurar listeners de eventos
 function setupEventListeners() {
-  console.log("Configurando listeners de eventos")
+  console.log("Configurando listeners de eventos");
 
   try {
     // 1. Cerrar sesión
-    const logoutButton = document.getElementById("logout-button")
+    const logoutButton = document.getElementById("logout-button");
     if (logoutButton) {
       logoutButton.addEventListener("click", (e) => {
-        e.preventDefault()
-        console.log("Cerrando sesión")
-        Storage.logout()
-        window.location.href = "login.html"
-      })
+        e.preventDefault();
+        console.log("Cerrando sesión");
+        Storage.logout();
+        window.location.href = "login.html";
+      });
     }
 
     // 2. Mostrar perfil desde el navbar
-    const profileButton = document.getElementById("profile-button")
+    const profileButton = document.getElementById("profile-button");
     if (profileButton) {
       profileButton.addEventListener("click", (e) => {
-        e.preventDefault()
-        showProfileSection()
-      })
+        e.preventDefault();
+        showProfileSection();
+      });
     }
 
     // 3. Cambiar contraseña - SOLO si el usuario es admin
-    const changePasswordBtn = document.getElementById("change-password-btn")
+    const changePasswordBtn = document.getElementById("change-password-btn");
     if (changePasswordBtn) {
       if (currentUser.rol === "admin") {
         changePasswordBtn.addEventListener("click", () => {
-          console.log("Mostrando modal de cambio de contraseña")
-          showChangePasswordModal()
-        })
+          console.log("Mostrando modal de cambio de contraseña");
+          showChangePasswordModal();
+        });
       } else {
-        changePasswordBtn.style.display = "none"
+        changePasswordBtn.style.display = "none";
       }
     }
 
-    // 5. Nuevo usuario - SOLO si el usuario es admin
-    const newUserButton = document.getElementById("new-user-button")
+    // 4. Crear nuevo proyecto
+    const createProjectButton = document.getElementById("create-project-button");
+    if (createProjectButton && currentUser.rol === "admin") {
+      createProjectButton.addEventListener("click", () => {
+        console.log("Mostrando modal de creación de proyecto");
+        showCreateProjectModal();
+      });
+    } else if (createProjectButton) {
+      createProjectButton.style.display = "none";
+    }
+
+    // 5. Guardar proyecto
+    document.getElementById("save-project-button")?.addEventListener("click", saveProject);
+
+    // 6. Nuevo usuario - SOLO si el usuario es admin
+    const newUserButton = document.getElementById("new-user-button");
     if (newUserButton) {
       if (currentUser.rol === "admin") {
         newUserButton.addEventListener("click", () => {
-          console.log("Mostrando formulario de nuevo usuario")
-          showUserModal()
-        })
+          console.log("Mostrando formulario de nuevo usuario");
+          showUserModal();
+        });
       } else {
-        newUserButton.style.display = "none"
+        newUserButton.style.display = "none";
       }
     }
 
-    // 6. Guardar usuario - SOLO si el usuario es admin
-    const saveUserButton = document.getElementById("save-user-button")
+    // 7. Guardar usuario - SOLO si el usuario es admin
+    const saveUserButton = document.getElementById("save-user-button");
     if (saveUserButton && currentUser.rol !== "admin") {
-      saveUserButton.style.display = "none"
+      saveUserButton.style.display = "none";
     }
 
     const clearHighlightButton = document.getElementById('clear-highlight-button');
@@ -219,147 +276,172 @@ function setupEventListeners() {
         clearHighlightButton.addEventListener('click', clearHighlight);
     }
 
-    // 10. Aplicar filtros
-    const applyFiltersButton = document.getElementById("apply-filters")
+    // 8. Aplicar filtros
+    const applyFiltersButton = document.getElementById("apply-filters");
     if (applyFiltersButton) {
       applyFiltersButton.addEventListener("click", () => {
-        console.log("Aplicando filtros")
-        filterProjects()
-      })
+        console.log("Aplicando filtros");
+        filterProjects();
+      });
     }
 
-    // 11. Cambio en tipo de fecha para filtros
-    const filterDateType = document.getElementById("filter-date-type")
+    // 9. Cambio en tipo de fecha para filtros
+    const filterDateType = document.getElementById("filter-date-type");
     if (filterDateType) {
       filterDateType.addEventListener("change", () => {
-        console.log("Cambiando tipo de fecha para filtros")
-        populateDateSelectors()
-      })
+        console.log("Cambiando tipo de fecha para filtros");
+        populateDateSelectors();
+      });
     }
 
-    // 12. Botones de período de tiempo para gráficos
-    const timePeriodButtons = document.querySelectorAll(".time-period-btn")
+    // 10. Botones de período de tiempo para gráficos
+    const timePeriodButtons = document.querySelectorAll(".time-period-btn");
     timePeriodButtons.forEach((button) => {
       button.addEventListener("click", function () {
-        const period = this.getAttribute("data-period")
+        const period = this.getAttribute("data-period");
 
         // Quitar clase activa de todos los botones del mismo grupo
-        const buttonGroup = this.closest(".btn-group")
+        const buttonGroup = this.closest(".btn-group");
         if (buttonGroup) {
           buttonGroup.querySelectorAll(".time-period-btn").forEach((btn) => {
-            btn.classList.remove("active")
-          })
+            btn.classList.remove("active");
+          });
         }
 
         // Agregar clase activa al botón clickeado
-        this.classList.add("active")
+        this.classList.add("active");
 
         // Actualizar gráficos según el período seleccionado
-        const chartType = this.getAttribute("data-chart")
+        const chartType = this.getAttribute("data-chart");
         if (chartType === "status") {
-          loadProjectsByStatusChart(period)
+          loadProjectsByStatusChart(period);
         } else if (chartType === "department") {
-          loadProjectsByDepartmentChart()
+          loadProjectsByDepartmentChart();
         } else if (chartType === "flow") {
-          loadProjectsFlowChart(period)
+          loadProjectsFlowChart(period);
         } else if (chartType === "prst") {
-          loadProjectsByPRSTChart(period)
+          loadProjectsByPRSTChart(period);
+        } else if (chartType === "request-type") {
+          loadProjectsByRequestTypeChart(period);
         }
-      })
-    })
-
-    // 13. Refrescar gráfico de departamentos
-    const refreshDepartmentChart = document.getElementById("refresh-department-chart")
-    if (refreshDepartmentChart) {
-      refreshDepartmentChart.addEventListener("click", () => {
-        loadProjectsByDepartmentChart()
-      })
-    }
-
-    // 14. Mostrar/ocultar contraseña en formulario de usuario
-    const togglePassword = document.getElementById("toggle-password")
-    if (togglePassword) {
-      togglePassword.addEventListener("click", function () {
-        const passwordInput = document.getElementById("user-password")
-        if (passwordInput) {
-          const type = passwordInput.getAttribute("type") === "password" ? "text" : "password"
-          passwordInput.setAttribute("type", type)
-
-          // Cambiar el icono
-          const icon = this.querySelector("i")
-          if (icon) {
-            icon.classList.toggle("fa-eye")
-            icon.classList.toggle("fa-eye-slash")
-          }
-        }
-      })
-    }
-
-    // 15. Cambiar campos según rol de usuario
-    const userRolSelect = document.getElementById("user-rol")
-    if (userRolSelect) {
-      userRolSelect.addEventListener("change", function () {
-        const prstFields = document.getElementById("prst-fields")
-        if (prstFields) {
-          if (this.value === "prst") {
-            prstFields.classList.remove("d-none")
-          } else {
-            prstFields.classList.add("d-none")
-          }
-        }
-      })
-    }
-
-    // 16. Confirmar desactivación de usuario
-    const confirmDeactivateBtn = document.getElementById("confirm-deactivate-btn")
-    if (confirmDeactivateBtn) {
-      confirmDeactivateBtn.addEventListener("click", () => {
-        const reason = document.getElementById("deactivation-reason").value.trim()
-        if (!reason) {
-          alert("Por favor, escriba una razón para esta acción.")
-          return
-        }
-
-        // Cambiar el estado del usuario
-        const userId = document.getElementById("user-id").value
-        const currentStatus = document.getElementById("user-activo").value === "true"
-        document.getElementById("user-activo").value = (!currentStatus).toString()
-        document.getElementById("user-activo-text").value = !currentStatus ? "Activo" : "Inactivo"
-
-        // Actualizar texto del botón
-        const toggleButton = document.getElementById("toggle-user-status-btn")
-        const toggleText = document.getElementById("toggle-status-text")
-        if (toggleButton && toggleText) {
-          toggleText.textContent = !currentStatus ? "Desactivar Usuario" : "Activar Usuario"
-          toggleButton.classList.toggle("btn-warning")
-          toggleButton.classList.toggle("btn-success")
-        }
-
-        // Cerrar modal
-        const deactivateModal = bootstrap.Modal.getInstance(document.getElementById("deactivateUserModal"))
-        deactivateModal.hide()
-      })
-    }
-
-    const notificationsDropdown = document.getElementById("notificationsDropdown")
-    if (notificationsDropdown) {
-      notificationsDropdown.addEventListener("click", (e) => {
-        e.preventDefault()
-        loadNotifications()
-      })
-    }
-
-    // 17. Botones de período de tiempo para gráfico de tipo de solicitud
-    document.querySelectorAll('[data-chart="request-type"].time-period-btn').forEach(button => {
-      button.addEventListener('click', function() {
-        const period = this.getAttribute('data-period');
-        loadProjectsByRequestTypeChart(period);
       });
     });
 
-    console.log("Listeners de eventos configurados correctamente")
+    // 11. Refrescar gráfico de departamentos
+    const refreshDepartmentChart = document.getElementById("refresh-department-chart");
+    if (refreshDepartmentChart) {
+      refreshDepartmentChart.addEventListener("click", () => {
+        loadProjectsByDepartmentChart();
+      });
+    }
+
+    // 12. Mostrar/ocultar contraseña en formulario de usuario
+    const togglePassword = document.getElementById("toggle-password");
+    if (togglePassword) {
+      togglePassword.addEventListener("click", function () {
+        const passwordInput = document.getElementById("user-password");
+        if (passwordInput) {
+          const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+          passwordInput.setAttribute("type", type);
+
+          // Cambiar el icono
+          const icon = this.querySelector("i");
+          if (icon) {
+            icon.classList.toggle("fa-eye");
+            icon.classList.toggle("fa-eye-slash");
+          }
+        }
+      });
+    }
+
+    // 13. Cambiar campos según rol de usuario
+    const userRolSelect = document.getElementById("user-rol");
+    if (userRolSelect) {
+      userRolSelect.addEventListener("change", function () {
+        const prstFields = document.getElementById("prst-fields");
+        if (prstFields) {
+          if (this.value === "prst") {
+            prstFields.classList.remove("d-none");
+          } else {
+            prstFields.classList.add("d-none");
+          }
+        }
+      });
+    }
+
+    // 14. Confirmar desactivación de usuario
+    const confirmDeactivateBtn = document.getElementById("confirm-deactivate-btn");
+    if (confirmDeactivateBtn) {
+      confirmDeactivateBtn.addEventListener("click", () => {
+        const reason = document.getElementById("deactivation-reason").value.trim();
+        if (!reason) {
+          alert("Por favor, escriba una razón para esta acción.");
+          return;
+        }
+
+        // Cambiar el estado del usuario
+        const userId = document.getElementById("user-id").value;
+        const currentStatus = document.getElementById("user-activo").value === "true";
+        document.getElementById("user-activo").value = (!currentStatus).toString();
+        document.getElementById("user-activo-text").value = !currentStatus ? "Activo" : "Inactivo";
+
+        // Actualizar texto del botón
+        const toggleButton = document.getElementById("toggle-user-status-btn");
+        const toggleText = document.getElementById("toggle-status-text");
+        if (toggleButton && toggleText) {
+          toggleText.textContent = !currentStatus ? "Desactivar Usuario" : "Activar Usuario";
+          toggleButton.classList.toggle("btn-warning");
+          toggleButton.classList.toggle("btn-success");
+        }
+
+        // Cerrar modal
+        const deactivateModal = bootstrap.Modal.getInstance(document.getElementById("deactivateUserModal"));
+        deactivateModal.hide();
+      });
+    }
+
+    // 15. Notificaciones dropdown
+    const notificationsDropdown = document.getElementById("notificationsDropdown");
+    if (notificationsDropdown) {
+      notificationsDropdown.addEventListener("click", (e) => {
+        e.preventDefault();
+        loadNotifications();
+      });
+    }
+
+    // 16. Marcar todas las notificaciones como leídas
+    const markAllReadBtn = document.getElementById("mark-all-read");
+    if (markAllReadBtn) {
+      markAllReadBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        markAllNotificationsAsRead();
+      });
+    }
+
+    // 17. Mostrar/ocultar campos de altura de postes
+    const polesInput = document.getElementById("project-poles");
+    if (polesInput) {
+      polesInput.addEventListener("change", function() {
+        const poleHeightsContainer = document.getElementById("pole-heights-container");
+        if (this.value > 1) {
+          poleHeightsContainer.classList.remove("d-none");
+        } else {
+          poleHeightsContainer.classList.add("d-none");
+        }
+      });
+    }
+
+    // 18. Generar OT AIR-E al cambiar PRST
+    const prstSelect = document.getElementById("project-prst");
+    if (prstSelect) {
+      prstSelect.addEventListener("change", function() {
+        generateOTAirE();
+      });
+    }
+
+    console.log("Listeners de eventos configurados correctamente");
   } catch (error) {
-    console.error("Error al configurar listeners de eventos:", error)
+    console.error("Error al configurar listeners de eventos:", error);
   }
 }
 
@@ -381,6 +463,85 @@ async function markAllNotificationsAsRead() {
   }
 }
 
+// Función para mostrar el modal de creación de proyecto
+function showCreateProjectModal() {
+  console.log("Mostrando modal de creación de proyecto");
+  
+  try {
+    // Limpiar formulario
+    const form = document.getElementById("project-form");
+    if (form) form.reset();
+    
+    // Generar ID secuencial
+    const projects = Storage.getProjects();
+    const nextId = projects.length > 0 ? Math.max(...projects.map(p => parseInt(p.id))) + 1 : 1;
+    document.getElementById("project-id").value = nextId;
+    
+    // 2. Resetear controles de altura
+    document.querySelectorAll(".pole-height").forEach(input => {
+      input.value = "";
+    });
+    
+    // 3. Ocultar sección de alturas y resetear summary
+    const heightsContainer = document.getElementById("pole-heights-container");
+    if (heightsContainer) {
+      heightsContainer.classList.add("d-none");
+    }
+    
+    const heightSummary = document.getElementById("height-summary");
+    if (heightSummary) {
+      heightSummary.textContent = "Total: 0 de 1 poste";
+    }
+    
+    // 4. Generar OT si hay PRST seleccionado
+    const prstSelect = document.getElementById("project-prst");
+    if (prstSelect && prstSelect.value) {
+      generateOTAirE();
+    }
+    
+    // 5. Mostrar modal
+    const modalElement = document.getElementById("createProjectModal");
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
+    }
+    
+    console.log("Modal mostrado correctamente");
+  } catch (error) {
+    console.error("Error al mostrar modal:", error);
+    alert("Error al abrir el formulario de proyecto");
+  }
+}
+
+// Función para generar OT AIR-E
+function generateOTAirE() {
+  const prstSelect = document.getElementById("project-prst");
+  const otInput = document.getElementById("project-ot");
+  
+  if (prstSelect?.value && otInput) {
+    const prstCode = prstSelect.value;
+    const prst = Storage.getPRSTList().find(p => p.nombreCorto === prstCode);
+    const prstName = (prst?.nombreCorto || prstCode).replace(/\s+/g, '_');
+    
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+    
+    const projects = Storage.getProjects();
+    const currentMonthProjects = projects.filter(p => 
+      p.prstNombre === prstCode && 
+      new Date(p.fechaCreacion).getMonth() === currentDate.getMonth() &&
+      new Date(p.fechaCreacion).getFullYear() === currentDate.getFullYear()
+    );
+    
+    const consecutiveNumber = currentMonthProjects.length + 1;
+    const ot = `${prstName}_${year}_${month}.${consecutiveNumber}`;
+    
+    if (otInput) otInput.value = ot;
+    return ot;
+  }
+  return "";
+}
 // Función para mostrar/ocultar contraseña
 function setupPasswordToggle() {
   const togglePasswordButton = document.getElementById("toggle-password");
@@ -422,6 +583,15 @@ function setupToggleUserStatus() {
       deactivateModal.show()
     })
   }
+}
+
+let lastProjectId = 0;
+function generateId() {
+  const projects = Storage.getProjects();
+  if (projects.length > 0) {
+    lastProjectId = Math.max(...projects.map(p => parseInt(p.id)));
+  }
+  return (lastProjectId + 1).toString();
 }
 
 // Función para configurar las tarjetas del dashboard
@@ -525,56 +695,7 @@ function setupDashboardCards() {
   }
 }
 
-// Función auxiliar para actualizar la tabla de proyectos
-function updateProjectsTable(projects) {
-  const projectsTableBody = document.getElementById("projects-table-body")
 
-  if (!projectsTableBody) {
-    console.warn("Elemento projects-table-body no encontrado")
-    return
-  }
-
-  // Limpiar tabla
-  projectsTableBody.innerHTML = ""
-
-  // Si no hay proyectos, mostrar mensaje
-  if (projects.length === 0) {
-    projectsTableBody.innerHTML = `
-      <tr>
-        <td colspan="9" class="text-center">No hay proyectos para mostrar</td>
-      </tr>
-    `
-    return
-  }
-
-  // Llenar tabla con proyectos
-  projects.forEach((project) => {
-    const row = document.createElement("tr")
-    row.innerHTML = `
-      <td>${project.id || "N/A"}</td>
-      <td>${project.nombre || "Sin nombre"}</td>
-      <td>${project.prstNombre || "N/A"}</td>
-      <td>${project.departamento || "N/A"}</td>
-      <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
-      <td>${formatDate(project.fechaInicio) || "N/A"}</td>
-      <td>${formatDate(project.fechaFin) || "N/A"}</td>
-      <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
-      <td>
-        <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
-          <i class="fas fa-eye"></i>
-        </button>
-        <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
-          <i class="fas fa-history"></i>
-        </button>
-        ${project.estado !== "Finalizado" && project.estado !== "Completado" ? `` : ""}
-      </td>
-    `
-    projectsTableBody.appendChild(row)
-  })
-
-  // Agregar eventos a los botones
-  addProjectTableEventListeners(projectsTableBody)
-}
 
 // Cargar datos del dashboard
 function loadDashboardData() {
@@ -601,6 +722,128 @@ function loadDashboardData() {
     console.error("Error al cargar datos del dashboard:", error)
     alert(`Error al cargar el dashboard: ${error.message}. Por favor, recargue la página.`)
   }
+}
+
+
+// Función para manejar cambios en el número de postes
+function showProjectHistory(projectId) {
+  console.log(`Mostrando historial del proyecto: ${projectId}`);
+
+  try {
+    const project = Storage.getProjectById(projectId);
+    if (!project) {
+      console.error(`Proyecto no encontrado: ${projectId}`);
+      alert("No se encontró el proyecto solicitado");
+      return;
+    }
+
+    // Ordenar historial por fecha (más recientes primero)
+    const sortedHistory = [...project.historial].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    // Crear modal para mostrar historial
+    const projectHistoryModal = document.getElementById("projectHistoryModal");
+    const projectHistoryBody = document.getElementById("project-history-body");
+
+    if (!projectHistoryModal || !projectHistoryBody) {
+      console.error("Elementos del modal de historial no encontrados");
+      return;
+    }
+
+    // Limpiar tabla
+    projectHistoryBody.innerHTML = "";
+
+    // Llenar tabla con historial
+    sortedHistory.forEach((item) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${formatDateTime(item.fecha)}</td>
+        <td>${project.otAirE}</td>
+        <td><span class="badge ${getBadgeClass(item.estado)}">${item.estado}</span></td>
+        <td>${item.usuario || "No especificado"}</td>
+        <td>${item.rol || "No especificado"}</td>
+        <td>${item.descripcion || "No hay descripción"}</td>
+      `;
+      projectHistoryBody.appendChild(row);
+    });
+
+    // Mostrar modal
+    const modal = new bootstrap.Modal(projectHistoryModal);
+    modal.show();
+
+    console.log("Historial del proyecto mostrado correctamente");
+  } catch (error) {
+    console.error("Error al mostrar historial del proyecto:", error);
+    alert("Error al cargar el historial del proyecto. Por favor, intente nuevamente.");
+  }
+}
+
+// Función para validar las alturas de los postes
+function validatePoleHeights() {
+  const totalPoles = parseInt(document.getElementById("project-poles").value) || 0;
+  const heightInputs = document.querySelectorAll(".pole-height");
+  let sum = 0;
+  
+  heightInputs.forEach(input => {
+    const value = parseInt(input.value) || 0;
+    if (value < 0) {
+      input.value = "";
+      return;
+    }
+    sum += value;
+  });
+
+  if (sum > totalPoles) {
+    alert(`Error: La suma de postes por altura (${sum}) excede el total de postes (${totalPoles})`);
+    resetHeightInputs();
+    return false;
+  }
+  
+  return true;
+}
+
+// Inicializar controles cuando el DOM esté listo
+document.addEventListener("DOMContentLoaded", () => {
+  setupPoleHeightControls();
+});
+
+// Función para actualizar el resumen de alturas
+function updateHeightSummary() {
+  const totalPoles = parseInt(document.getElementById("project-poles").value) || 0;
+  const heightInputs = document.querySelectorAll(".pole-height");
+  let sum = 0;
+  
+  heightInputs.forEach(input => {
+    sum += parseInt(input.value) || 0;
+  });
+
+  const summary = document.getElementById("height-summary");
+  if (summary) {
+    summary.textContent = `Total: ${sum} de ${totalPoles} postes`;
+    summary.className = sum < totalPoles ? "text-warning" : "text-success";
+  }
+}
+
+// Función para resetear los inputs de altura
+function resetHeightInputs() {
+  document.querySelectorAll(".pole-height").forEach(input => {
+    input.value = "";
+  });
+  updateHeightSummary();
+}
+
+/**
+ * Obtiene la distribución de postes por altura como objeto
+ */
+function getPoleHeightsDistribution() {
+  const distribution = {};
+  document.querySelectorAll(".pole-height").forEach(input => {
+    const height = input.dataset.height;
+    const count = parseInt(input.value) || 0;
+    if (count > 0) {
+      distribution[`poste_${height}m`] = count;
+    }
+  });
+  return distribution;
 }
 
 // Función para actualizar contadores
@@ -753,62 +996,76 @@ function loadUsersTable() {
 }
 
 // Función para cargar la tabla de proyectos
+// Función para cargar la tabla de proyectos
 function loadProjectsTable() {
-  console.log("Cargando tabla de proyectos")
+  console.log("Cargando tabla de proyectos");
 
   try {
-    const projects = Storage.getProjects()
-    const projectsTableBody = document.getElementById("projects-table-body")
+    const projects = Storage.getProjects();
+    const projectsTableBody = document.getElementById("projects-table-body");
 
     if (!projectsTableBody) {
-      console.warn("Elemento projects-table-body no encontrado")
-      return
+      console.warn("Elemento projects-table-body no encontrado");
+      return;
     }
 
-    // Limpiar tabla
-    projectsTableBody.innerHTML = ""
+    updateProjectsTable(projects);
 
-    // Si no hay proyectos, mostrar mensaje
-    if (projects.length === 0) {
-      projectsTableBody.innerHTML = `
-                <tr>
-                    <td colspan="9" class="text-center">No hay proyectos para mostrar</td>
-                </tr>
-            `
-      return
-    }
-
-    // Llenar tabla con proyectos
-    projects.forEach((project) => {
-      const row = document.createElement("tr")
-      row.innerHTML = `
-                <td>${project.id || "N/A"}</td>
-                <td>${project.nombre || "Sin nombre"}</td>
-                <td>${project.prstNombre || "N/A"}</td>
-                <td>${project.departamento || "N/A"}</td>
-                <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
-                <td>${formatDate(project.fechaInicio) || "N/A"}</td>
-                <td>${formatDate(project.fechaFin) || "N/A"}</td>
-                <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
-                <td>
-                    <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
-                        <i class="fas fa-history"></i>
-                    
-                </td>
-            `
-      projectsTableBody.appendChild(row)
-    })
-
-    // Agregar eventos a los botones
-    addProjectTableEventListeners(projectsTableBody)
-
-    console.log("Tabla de proyectos cargada correctamente")
+    console.log("Tabla de proyectos cargada correctamente");
   } catch (error) {
-    console.error("Error al cargar tabla de proyectos:", error)
+    console.error("Error al cargar tabla de proyectos:", error);
   }
+}
+
+// Función auxiliar para actualizar la tabla de proyectos
+function updateProjectsTable(projects) {
+  const projectsTableBody = document.getElementById("projects-table-body");
+
+  if (!projectsTableBody) {
+    console.warn("Elemento projects-table-body no encontrado");
+    return;
+  }
+
+  // Limpiar tabla
+  projectsTableBody.innerHTML = "";
+
+  // Si no hay proyectos, mostrar mensaje
+  if (projects.length === 0) {
+    projectsTableBody.innerHTML = `
+      <tr>
+        <td colspan="11" class="text-center">No hay proyectos para mostrar</td>
+      </tr>
+    `;
+    return;
+  }
+
+  // Llenar tabla con proyectos
+  projects.forEach((project) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${project.id || "N/A"}</td>
+      <td>${project.otAirE || "N/A"}</td>
+      <td>${project.nombre || "Sin nombre"}</td>
+      <td>${project.prstNombre || "N/A"}</td>
+      <td>${project.departamento || "N/A"}</td>
+      <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
+      <td>${formatDate(project.fechaInicio) || "N/A"}</td>
+      <td>${formatDate(project.fechaFin) || "N/A"}</td>
+      <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
+      <td>
+        <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
+          <i class="fas fa-history"></i>
+        </button>
+      </td>
+    `;
+    projectsTableBody.appendChild(row);
+  });
+
+  // Agregar eventos a los botones
+  addProjectTableEventListeners(projectsTableBody);
 }
 
 // Función para cargar proyectos en gestión
@@ -856,34 +1113,30 @@ function loadInManagementProjects() {
       return
     }
 
-    // Llenar tabla con proyectos
-    projects.forEach((project) => {
-      const row = document.createElement("tr")
-      row.innerHTML = `
-                <td>${project.id || "N/A"}</td>
-                <td>${project.nombre || "Sin nombre"}</td>
-                <td>${project.prstNombre || "N/A"}</td>
-                <td>${project.departamento || "N/A"}</td>
-                <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
-                <td>${formatDate(project.fechaInicio) || "N/A"}</td>
-                <td>${formatDate(project.fechaFin) || "N/A"}</td>
-                <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
-                <td>
-                    <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
-                        <i class="fas fa-history"></i>
-                    </button>
-                    <button class="btn btn-primary btn-sm change-status-project" data-id="${
-                      project.id
-                    }" title="Cambiar Estado">
-                        <i class="fas fa-exchange-alt"></i>
-                    </button>
-                </td>
-            `
-      tableBody.appendChild(row)
-    })
+    /// Llenar tabla con proyectos
+  projects.forEach((project) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${project.id || "N/A"}</td>
+      <td>${project.otAirE || "N/A"}</td>
+      <td>${project.nombre || "Sin nombre"}</td>
+      <td>${project.prstNombre || "N/A"}</td>
+      <td>${project.departamento || "N/A"}</td>
+      <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
+      <td>${formatDate(project.fechaInicio) || "N/A"}</td>
+      <td>${formatDate(project.fechaFin) || "N/A"}</td>
+      <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
+      <td>
+        <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
+          <i class="fas fa-history"></i>
+        </button>
+      </td>
+    `;
+    projectsTableBody.appendChild(row);
+  })
 
     // Agregar eventos a los botones
     addProjectTableEventListeners(tableBody)
@@ -924,28 +1177,29 @@ function loadCompletedProjects() {
     }
 
     // Llenar tabla con proyectos
-    projects.forEach((project) => {
-      const row = document.createElement("tr")
-      row.innerHTML = `
-                <td>${project.id || "N/A"}</td>
-                <td>${project.nombre || "Sin nombre"}</td>
-                <td>${project.prstNombre || "N/A"}</td>
-                <td>${project.departamento || "N/A"}</td>
-                <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
-                <td>${formatDate(project.fechaInicio) || "N/A"}</td>
-                <td>${formatDate(project.fechaFin) || "N/A"}</td>
-                <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
-                <td>
-                    <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
-                        <i class="fas fa-history"></i>
-                    </button>
-                </td>
-            `
-      tableBody.appendChild(row)
-    })
+  projects.forEach((project) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${project.id || "N/A"}</td>
+      <td>${project.otAirE || "N/A"}</td>
+      <td>${project.nombre || "Sin nombre"}</td>
+      <td>${project.prstNombre || "N/A"}</td>
+      <td>${project.departamento || "N/A"}</td>
+      <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
+      <td>${formatDate(project.fechaInicio) || "N/A"}</td>
+      <td>${formatDate(project.fechaFin) || "N/A"}</td>
+      <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
+      <td>
+        <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
+          <i class="fas fa-history"></i>
+        </button>
+      </td>
+    `;
+    projectsTableBody.appendChild(row);
+  })
 
     // Agregar eventos a los botones
     addProjectTableEventListeners(tableBody)
@@ -1493,29 +1747,30 @@ function filterProjects() {
       return
     }
 
-    // Llenar tabla con proyectos filtrados
-    projects.forEach((project) => {
-      const row = document.createElement("tr")
-      row.innerHTML = `
-                <td>${project.id || "N/A"}</td>
-                <td>${project.nombre || "Sin nombre"}</td>
-                <td>${project.prstNombre || "N/A"}</td>
-                <td>${project.departamento || "N/A"}</td>
-                <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
-                <td>${formatDate(project.fechaInicio) || "N/A"}</td>
-                <td>${formatDate(project.fechaFin) || "N/A"}</td>
-                <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
-                <td>
-                    <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
-                        <i class="fas fa-history"></i>
-                    </button>
-                </td>
-            `
-      projectsTableBody.appendChild(row)
-    })
+    // Llenar tabla con proyectos
+  projects.forEach((project) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${project.id || "N/A"}</td>
+      <td>${project.otAirE || "N/A"}</td>
+      <td>${project.nombre || "Sin nombre"}</td>
+      <td>${project.prstNombre || "N/A"}</td>
+      <td>${project.departamento || "N/A"}</td>
+      <td>${formatDate(project.fechaCreacion) || "N/A"}</td>
+      <td>${formatDate(project.fechaInicio) || "N/A"}</td>
+      <td>${formatDate(project.fechaFin) || "N/A"}</td>
+      <td><span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span></td>
+      <td>
+        <button class="btn btn-info btn-sm view-project" data-id="${project.id}" title="Ver Detalles">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm history-project" data-id="${project.id}" title="Ver Historial">
+          <i class="fas fa-history"></i>
+        </button>
+      </td>
+    `;
+    projectsTableBody.appendChild(row);
+  });
 
     // Agregar eventos a los botones
     addProjectTableEventListeners(projectsTableBody)
@@ -1809,127 +2064,105 @@ function viewUserDetails(userId) {
 
 
 // Función para mostrar los detalles de un proyecto
+// Función para mostrar los detalles de un proyecto
 function viewProjectDetails(projectId) {
-  console.log(`Mostrando detalles del proyecto con ID: ${projectId}`);
+  console.log(`Mostrando detalles del proyecto: ${projectId}`);
 
   try {
-    const project = Storage.getProjectById(projectId);
-    const users = Storage.getUsers();
-
-    if (!project) {
-      console.error(`No se encontró el proyecto con ID: ${projectId}`);
-      alert("No se encontró el proyecto. Por favor, recargue la página.");
-      return;
-    }
-
-    // Calcular progreso del censo si existe información de postes
-    let progressPercentage = 0;
-    if (project.numPostes && project.postesCensados) {
-      progressPercentage = Math.round((project.postesCensados / project.numPostes) * 100);
-    }
-
-    // Mostrar información del progreso en el modal
-    document.getElementById("detalleProyectoProgresoCenso").innerHTML = `
-      <div class="progress mt-2">
-        <div class="progress-bar" role="progressbar" style="width: ${progressPercentage}%" 
-             aria-valuenow="${progressPercentage}" aria-valuemin="0" aria-valuemax="100">
-          ${progressPercentage}%
-        </div>
-      </div>
-      <small class="text-muted">${project.postesCensados || 0} de ${project.numPostes || 0} postes censados</small>
-    `;
-
-    // Función mejorada para obtener información del usuario asignado
-    const getAssignedUserInfo = (userId) => {
-      if (!userId) return { name: "No asignado", role: "" };
-      
-      const user = users.find(u => u.id === userId.toString()); // Asegurar comparación de strings
-      if (!user) return { name: "Usuario no encontrado", role: "" };
-      
-      return {
-        name: `${user.nombre || ""} ${user.apellido || ""}`.trim() || "Usuario sin nombre",
-        role: user.rol ? `(${user.rol})` : ""
-      };
-    };
-
-    // Obtener información de asignación mejorada
-    const assignedInfo = getAssignedUserInfo(project.asignadoA || project.analistaId || project.brigadaId);
-    const asignacionCompleta = `${assignedInfo.name} ${assignedInfo.role}`.trim();
-
-    // Llenar información general
-    document.getElementById("detalleProyectoId").textContent = project.id || "N/A";
-    document.getElementById("detalleProyectoNombre").textContent = project.nombre || "Sin nombre";
-    document.getElementById("detalleProyectoPRST").textContent = project.prstNombre || "N/A";
-    document.getElementById("detalleProyectoDireccionInicial").textContent = project.direccionInicial || "N/A";
-    document.getElementById("detalleProyectoDireccionFinal").textContent = project.direccionFinal || "N/A";
-    document.getElementById("detalleProyectoBarrios").textContent = project.barrios ? project.barrios.join(", ") : "N/A";
-
-    // Llenar detalles adicionales
-    document.getElementById("detalleProyectoMunicipio").textContent = project.municipio || "N/A";
-    document.getElementById("detalleProyectoDepartamento").textContent = project.departamento || "N/A";
-    document.getElementById("detalleProyectoNumeroPostes").textContent = project.numPostes || "N/A";
-    document.getElementById("detalleProyectoFechaInicio").textContent = formatDate(project.fechaInicio) || "N/A";
-    document.getElementById("detalleProyectoFechaFin").textContent = formatDate(project.fechaFin) || "N/A";
-    document.getElementById("detalleProyectoPuntoConexion").textContent = project.puntoConexion || "N/A";
-
-    // Llenar estado del proyecto
-    document.getElementById("detalleProyectoEstado").innerHTML = `<span class="badge ${getBadgeClass(project.estado)}">${project.estado || "No definido"}</span>`;
-    document.getElementById("detalleProyectoAsignado").innerHTML = asignacionCompleta;
-    document.getElementById("detalleProyectoFechaAsignacion").textContent = formatDate(project.fechaAsignacion) || "N/A";
-    document.getElementById("detalleProyectoObservaciones").textContent = project.observaciones || "Sin observaciones";
-
-    // Llenar documentos - Versión mejorada con manejo de casos nulos
-    const tablaDocumentos = document.getElementById("tablaDocumentosDetalle");
-    tablaDocumentos.innerHTML = "";
-
-    if (project.documentacion && Array.isArray(project.documentacion)) {
-      if (project.documentacion.length > 0) {
-        project.documentacion.forEach((doc, index) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>
-              <strong>${doc.tipo || "Documento sin tipo"}</strong><br>
-              <small class="text-muted">${doc.nombre || "Sin nombre"}</small>
-            </td>
-            <td>
-              <span class="badge ${doc.aprobado ? 'bg-success' : 'bg-warning'}">
-                ${doc.aprobado ? 'Aprobado' : 'Pendiente'}
-              </span>
-            </td>
-            <td>
-              ${doc.url ? `<a href="${doc.url}" target="_blank" class="btn btn-sm btn-primary me-1" title="Ver documento">
-                <i class="fas fa-eye"></i>
-              </a>` : ''}
-              <button class="btn btn-sm btn-secondary" title="Ver historial" onclick="showDocumentHistory('${projectId}', ${index})">
-                <i class="fas fa-history"></i>
-              </button>
-            </td>
-          `;
-          tablaDocumentos.appendChild(row);
-        });
-      } else {
-        tablaDocumentos.innerHTML = `
-          <tr>
-            <td colspan="3" class="text-center text-muted">No hay documentos registrados</td>
-          </tr>
-        `;
+      const project = Storage.getProjectById(projectId);
+      if (!project) {
+          console.error(`Proyecto no encontrado: ${projectId}`);
+          alert("No se encontró el proyecto solicitado");
+          return;
       }
-    } else {
-      tablaDocumentos.innerHTML = `
-        <tr>
-          <td colspan="3" class="text-center text-muted">No hay información de documentos disponible</td>
-        </tr>
-      `;
-    }
 
-    // Mostrar modal
-    const modal = new bootstrap.Modal(document.getElementById("modalDetalleProyecto"));
-    modal.show();
+      // Mostrar ID en el título
+      document.getElementById("detalleProyectoIdBadge").textContent = `ID: ${project.id}`;
+      
+      // Información básica
+      document.getElementById("detalleProyectoId").textContent = project.id || "N/A";
+      document.getElementById("detalleProyectoOtAirE").textContent = project.otAirE || "N/A";
+      document.getElementById("detalleProyectoOtPrst").textContent = project.otPrst || "N/A";
+      document.getElementById("detalleProyectoNombre").textContent = project.nombre || "Sin nombre";
+      document.getElementById("detalleProyectoPrst").textContent = project.prstNombre || "N/A";
+      document.getElementById("detalleProyectoTipoSolicitud").textContent = project.tipoSolicitud || "N/A";
 
-    console.log("Detalles del proyecto mostrados correctamente");
+      // Ubicación
+      document.getElementById("detalleProyectoDepartamento").textContent = project.departamento || "N/A";
+      document.getElementById("detalleProyectoMunicipio").textContent = project.municipio || "N/A";
+      document.getElementById("detalleProyectoBarrios").textContent = 
+          project.barrios ? (Array.isArray(project.barrios) ? project.barrios.join(", ") : project.barrios) : "N/A";
+      document.getElementById("detalleProyectoDireccionInicial").textContent = project.direccionInicial || "N/A";
+      document.getElementById("detalleProyectoDireccionFinal").textContent = project.direccionFinal || "N/A";
+      document.getElementById("detalleProyectoPuntoConexion").textContent = project.puntoConexion || "N/A";
+
+      // Detalles técnicos
+      document.getElementById("detalleProyectoNumPostes").textContent = project.numPostes || "0";
+      document.getElementById("detalleProyectoEstadoInicial").textContent = project.estadoInicial || "N/A";
+
+      // Fechas
+      document.getElementById("detalleProyectoFechaCreacion").textContent = formatDateTime(project.fechaCreacion) || "N/A";
+      document.getElementById("detalleProyectoFechaInicio").textContent = formatDateTime(project.fechaInicio) || "N/A";
+      document.getElementById("detalleProyectoFechaFin").textContent = formatDateTime(project.fechaFin) || "N/A";
+      document.getElementById("detalleProyectoFechaAsignacion").textContent = formatDateTime(project.fechaAsignacion) || "N/A";
+
+      // Estado actual
+      const estadoElement = document.getElementById("detalleProyectoEstado");
+      estadoElement.innerHTML = project.estado ? 
+          `<span class="badge ${getBadgeClass(project.estado)}">${project.estado}</span>` : "N/A";
+      
+      document.getElementById("detalleProyectoAsignadoA").textContent = 
+          project.asignadoA ? `${project.asignadoA} (${project.asignadoRol || "Sin rol"})` : "No asignado";
+      document.getElementById("detalleProyectoObservaciones").textContent = project.observaciones || "Sin observaciones";
+
+      // Distribución de postes por altura
+      const alturas = ["8", "9", "10", "11", "12", "14", "16"];
+      let totalPostes = 0;
+      
+      alturas.forEach(altura => {
+          const count = project[`altura${altura}`] || 0;
+          document.getElementById(`detalleProyectoAltura${altura}`).textContent = count;
+          totalPostes += parseInt(count);
+      });
+      
+      document.getElementById("detalleProyectoTotalPostes").textContent = totalPostes;
+      document.getElementById("detalleProyectoAlturaPostes").textContent = 
+          alturas.map(a => project[`altura${a}`] ? `${project[`altura${a}`]} de ${a}m` : null)
+                 .filter(Boolean).join(", ") || "No especificado";
+
+      // Documentación (ejemplo básico)
+      const docsTable = document.getElementById("tablaDocumentosDetalle");
+      if (project.documentacion && project.documentacion.length > 0) {
+          docsTable.innerHTML = project.documentacion.map(doc => `
+              <tr>
+                  <td>${doc.tipo || "N/A"}</td>
+                  <td>${doc.nombre || "N/A"}</td>
+                  <td><span class="badge ${doc.aprobado ? "bg-success" : "bg-warning"}">
+                      ${doc.aprobado ? "Aprobado" : "Pendiente"}
+                  </span></td>
+                  <td>${doc.ultimaActualizacion ? formatDateTime(doc.ultimaActualizacion) : "N/A"}</td>
+                  <td>
+                      <button class="btn btn-sm btn-outline-primary view-doc" data-id="${project.id}" data-doc="${doc.id}">
+                          <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-secondary history-doc" data-id="${project.id}" data-doc="${doc.id}">
+                          <i class="fas fa-history"></i>
+                      </button>
+                  </td>
+              </tr>
+          `).join("");
+      } else {
+          docsTable.innerHTML = `<tr><td colspan="5" class="text-center">No hay documentos registrados</td></tr>`;
+      }
+
+      // Mostrar modal
+      const modal = new bootstrap.Modal(document.getElementById("modalDetalleProyecto"));
+      modal.show();
+
+      console.log("Detalles del proyecto mostrados correctamente");
   } catch (error) {
-    console.error("Error al mostrar detalles del proyecto:", error);
-    alert("Error al mostrar los detalles del proyecto. Por favor, inténtelo de nuevo.");
+      console.error("Error al mostrar detalles del proyecto:", error);
+      alert("Error al cargar los detalles del proyecto. Por favor, intente nuevamente.");
   }
 }
 
@@ -2189,6 +2422,132 @@ function showChangeStatusModal(projectId) {
   }
 }
 
+
+// Función para guardar un proyecto
+function saveProject() {
+  console.log("Intentando guardar proyecto...");
+  
+  try {
+      // 1. Obtener todos los proyectos para generar ID secuencial
+      const projects = Storage.getProjects();
+      const projectId = projects.length > 0 ? Math.max(...projects.map(p => parseInt(p.id))) + 1 : 1;
+      
+      // 2. Obtener valores del formulario
+      const projectName = document.getElementById("project-name")?.value.trim();
+      const projectPRST = document.getElementById("project-prst")?.value;
+      const projectDepartment = document.getElementById("project-department")?.value;
+      const projectMunicipality = document.getElementById("project-municipality")?.value;
+      const numPoles = parseInt(document.getElementById("project-poles")?.value) || 0;
+      const projectOT = generateOTAirE(); // Generar OT automáticamente
+      
+      // 3. Validar campos obligatorios
+      if (!projectName || !projectPRST || !projectDepartment || !projectMunicipality) {
+          alert("Por favor complete todos los campos obligatorios marcados con *");
+          return false;
+      }
+      
+      if (numPoles < 1) {
+          alert("El número de postes debe ser al menos 1");
+          return false;
+      }
+      
+      // 4. Validar distribución de alturas si hay más de 1 poste
+      if (numPoles > 1) {
+          const heightsSum = Object.values(getPoleHeightsDistribution()).reduce((a, b) => a + b, 0);
+          if (heightsSum !== numPoles) {
+              alert(`Error: La suma de postes por altura (${heightsSum}) no coincide con el total de postes (${numPoles})`);
+              return false;
+          }
+      }
+      
+      // 5. Crear objeto del proyecto
+      const projectData = {
+          id: projectId.toString(), // Convertir a string para consistencia
+          nombre: projectName,
+          prstNombre: projectPRST,
+          otAirE: projectOT,
+          departamento: projectDepartment,
+          municipio: projectMunicipality,
+          numPostes: numPoles,
+          estado: "Nuevo",
+          fechaCreacion: new Date().toISOString(),
+          creadorId: currentUser.id,
+          creadorNombre: `${currentUser.nombre} ${currentUser.apellido}`,
+          coordinadorId: "9", // Asignación automática al coordinador operativo
+          asignadoA: "Wadith Alejandro Castillo Ramirez",
+          asignadoRol: "coordinador",
+          
+          // Campos opcionales
+          ...(document.getElementById("project-address-start")?.value && { 
+              direccionInicial: document.getElementById("project-address-start").value.trim() 
+          }),
+          ...(document.getElementById("project-address-end")?.value && { 
+              direccionFinal: document.getElementById("project-address-end").value.trim() 
+          }),
+          ...(document.getElementById("project-connection-point")?.value && { 
+              puntoConexion: document.getElementById("project-connection-point").value.trim() 
+          }),
+          ...(document.getElementById("project-observations")?.value && { 
+              observaciones: document.getElementById("project-observations").value.trim() 
+          }),
+          
+          // Distribución de alturas de postes (si aplica)
+          ...(numPoles > 1 && getPoleHeightsDistribution()),
+          
+          // Historial de estados inicial
+          historial: [{
+              fecha: new Date().toISOString(),
+              estado: "Nuevo",
+              usuarioId: currentUser.id,
+              usuarioNombre: `${currentUser.nombre} ${currentUser.apellido}`,
+              rol: currentUser.rol,
+              descripcion: "Proyecto creado"
+          }]
+      };
+
+      console.log("Datos del proyecto a guardar:", projectData);
+
+      // 6. Guardar usando Storage
+      const savedProject = Storage.saveProject(projectData);
+      if (!savedProject) {
+          throw new Error("Error al guardar en Storage");
+      }
+
+      // 7. Cerrar modal y actualizar UI
+      const modal = bootstrap.Modal.getInstance(document.getElementById("createProjectModal"));
+      if (modal) {
+          modal.hide();
+      }
+
+      // 8. Actualizar las tablas y gráficos
+      loadProjectsTable();
+      loadDashboardData();
+      
+      // 9. Mostrar notificación de éxito
+      alert(`Proyecto creado correctamente con ID: ${projectId}`);
+      console.log("Proyecto guardado:", savedProject);
+      return true;
+
+  } catch (error) {
+      console.error("Error al guardar proyecto:", error);
+      alert(`Error: ${error.message}`);
+      return false;
+  }
+}
+
+// Función auxiliar para obtener la distribución de alturas
+function getPoleHeightsDistribution() {
+  const distribution = {};
+  document.querySelectorAll(".pole-height").forEach(input => {
+      const height = input.dataset.height;
+      const count = parseInt(input.value) || 0;
+      if (count > 0) {
+          distribution[`altura${height}`] = count.toString();
+      }
+  });
+  return distribution;
+}
+
 // Función para guardar el cambio de estado
 function saveProjectStatus() {
   console.log("Guardando cambio de estado")
@@ -2435,7 +2794,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 200)
     })
   }
+  
+setupPoleHeightControls();
 })
+
 
 // Agregar función para crear notificaciones de prueba (para desarrollo)
 function createTestNotifications() {
@@ -2466,6 +2828,34 @@ function createTestNotifications() {
   loadNotifications()
   console.log("Notificaciones de prueba creadas")
 }
+
+
+// Función para configurar los controles de altura de postes
+function setupPoleHeightControls() {
+  const polesInput = document.getElementById("project-poles");
+  const poleHeightsContainer = document.getElementById("pole-heights-container");
+  
+  if (polesInput && poleHeightsContainer) {
+    // Mostrar/ocultar controles de altura según número de postes
+    polesInput.addEventListener("change", function() {
+      if (parseInt(this.value) > 1) {
+        poleHeightsContainer.classList.remove("d-none");
+      } else {
+        poleHeightsContainer.classList.add("d-none");
+        resetHeightInputs();
+      }
+    });
+    
+    // Validar cambios en los inputs de altura
+    document.querySelectorAll(".pole-height").forEach(input => {
+      input.addEventListener("change", function() {
+        validatePoleHeights();
+        updateHeightSummary();
+      });
+    });
+  }
+}
+
 
 // Exponer la función para poder llamarla desde la consola
 window.createTestNotifications = createTestNotifications
@@ -2636,22 +3026,23 @@ function formatDate(dateString) {
 
 // Función auxiliar para formatear fecha y hora
 function formatDateTime(dateString) {
-  if (!dateString) return "N/A"
-
+  if (!dateString) return "N/A";
+  
   try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return "Fecha inválida"
-
-    return date.toLocaleString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Fecha inválida";
+    
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   } catch (error) {
-    console.error("Error al formatear fecha y hora:", error)
-    return "Fecha inválida"
+    console.error("Error al formatear fecha y hora:", error);
+    return "Fecha inválida";
   }
 }
 
@@ -3296,4 +3687,6 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     console.warn("Logout button not found")
   }
+  
+setupPoleHeightControls();
 })

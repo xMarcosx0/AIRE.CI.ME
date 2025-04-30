@@ -1,6 +1,6 @@
 git status
 git add .
-git commit -m ""
+git commit -m "primer comit"
 git push
 git pull
 git clone https://github.com/MarcosMarquez/Aire21-04.git

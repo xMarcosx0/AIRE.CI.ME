@@ -557,8 +557,7 @@ const Storage = {
   },
 
   // Guardar proyecto
-  // Dentro del objeto Storage, modificar el método saveProject:
-  // Modificar el método saveProject para usar el nuevo ID
+  // Guardar proyecto
   saveProject: function (project) {
     const projects = this.getProjects();
     const isNewProject = !project.id;
@@ -580,6 +579,8 @@ const Storage = {
       project.fechaCreacion = new Date().toISOString();
       project.estado = "Nuevo";
       project.historialEstados = [];
+      project.creadorId = this.getLoggedUser()?.id;
+      project.creadorNombre = `${this.getLoggedUser()?.nombre} ${this.getLoggedUser()?.apellido}`;
     }
   
     // Si el estado cambió, registrar en el historial
