@@ -384,8 +384,6 @@
                                         <th>PRST</th>
                                         <th>Departamento</th>
                                         <th>Fecha Creación</th>
-                                        <th>Fecha Inicio</th>
-                                        <th>Fecha Fin</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -652,25 +650,26 @@
                                 <label for="project-prst" class="form-label">PRST*</label>
                                 <select class="form-select" id="project-prst" required>
                                     <option value="">Seleccione un PRST</option>
+                                    <!-- Las opciones se llenarán dinámicamente -->
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 <label for="project-ot" class="form-label">OT AIR-E</label>
                                 <input type="text" class="form-control" id="project-ot" readonly>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <div class="mb-3">
-                                <label for="project-ot-prst" class="form-label">OT PRST (Opcional)</label>
+                                <label for="project-ot-prst" class="form-label">OT PRST (opcional)</label>
                                 <input type="text" class="form-control" id="project-ot-prst">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="project-department" class="form-label">Departamento*</label>
                                 <select class="form-select" id="project-department" required>
@@ -681,18 +680,16 @@
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="project-municipality" class="form-label">Municipio*</label>
                                 <select class="form-select" id="project-municipality" required>
                                     <option value="">Seleccione un municipio</option>
+                                    <!-- Los municipios se llenarán dinámicamente según el departamento -->
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="project-neighborhood" class="form-label">Barrio*</label>
                                 <input type="text" class="form-control" id="project-neighborhood" required>
@@ -701,17 +698,23 @@
                     </div>
                     
                     <div class="row">
-                        <div class="col-md-12">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="project-start-date" class="form-label">Fecha de Inicio*</label>
+                                <input type="date" class="form-control" id="project-start-date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="project-poles" class="form-label">Número de postes*</label>
-                                <input type="number" class="form-control" id="project-poles" min="1" required>
+                                <input type="number" class="form-control" id="project-poles" min="0" required>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Sección de distribución de alturas (inicialmente oculta) -->
                     <div id="pole-heights-container" class="d-none mb-3">
-                        <label class="form-label">Distribución por altura (metros)</label>
+                        <label class="form-label">Distribución por altura (metros)*</label>
                         <div class="row g-2">
                             <div class="col-6 col-md-4 col-lg-3">
                                 <div class="input-group mb-2">
@@ -774,9 +777,8 @@
 </div>
 
     <!-- Modal para ver detalles del proyecto -->
-  <!-- Modal para ver detalles del proyecto -->
 <div class="modal fade" id="modalDetalleProyecto" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">Detalles del Proyecto <span id="detalleProyectoIdBadge" class="badge bg-secondary ms-2"></span></h5>
@@ -813,8 +815,44 @@
                                         <td id="detalleProyectoPrst"></td>
                                     </tr>
                                     <tr>
-                                        <th>Tipo Solicitud:</th>
-                                        <td id="detalleProyectoTipoSolicitud"></td>
+                                        <th>Inspector:</th>
+                                        <td id="detalleProyectoInspector"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Estado Inicial:</th>
+                                        <td id="detalleProyectoEstadoInicial"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Estado Actual:</th>
+                                        <td id="detalleProyectoEstadoActual"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Cancelado:</th>
+                                        <td id="detalleProyectoCancelado"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Incluir en Contrato:</th>
+                                        <td id="detalleProyectoIncluirContrato"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Negado:</th>
+                                        <td id="detalleProyectoNegado"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Materiales:</th>
+                                        <td id="detalleProyectoMateriales"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Suma Total a Cobrar:</th>
+                                        <td id="detalleProyectoSumaTotal"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Tiempo de Respuesta:</th>
+                                        <td id="detalleProyectoTiempoRespuesta"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Estado de Asignación:</th>
+                                        <td id="detalleProyectoEstadoAsignacion"></td>
                                     </tr>
                                 </table>
                             </div>
@@ -835,50 +873,16 @@
                                         <td id="detalleProyectoMunicipio"></td>
                                     </tr>
                                     <tr>
-                                        <th>Barrio(s):</th>
-                                        <td id="detalleProyectoBarrios"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Dirección Inicial:</th>
-                                        <td id="detalleProyectoDireccionInicial"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Dirección Final:</th>
-                                        <td id="detalleProyectoDireccionFinal"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Punto Conexión:</th>
-                                        <td id="detalleProyectoPuntoConexion"></td>
+                                        <th>Barrio:</th>
+                                        <td id="detalleProyectoBarrio"></td>
                                     </tr>
                                 </table>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Columna derecha - Detalles técnicos y estado -->
+                    <!-- Columna derecha - Fechas y Postes -->
                     <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">Detalles Técnicos</h6>
-                            </div>
-                            <div class="card-body">
-                                <table class="table table-sm table-borderless">
-                                    <tr>
-                                        <th class="w-40">N° Postes:</th>
-                                        <td id="detalleProyectoNumPostes"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Altura Postes:</th>
-                                        <td id="detalleProyectoAlturaPostes"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Estado Inicial:</th>
-                                        <td id="detalleProyectoEstadoInicial"></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-
                         <div class="card mb-3">
                             <div class="card-header bg-light">
                                 <h6 class="mb-0">Fechas Clave</h6>
@@ -886,20 +890,64 @@
                             <div class="card-body">
                                 <table class="table table-sm table-borderless">
                                     <tr>
-                                        <th class="w-40">Creación:</th>
+                                        <th class="w-40">Fecha Creación:</th>
                                         <td id="detalleProyectoFechaCreacion"></td>
                                     </tr>
                                     <tr>
-                                        <th>Inicio:</th>
-                                        <td id="detalleProyectoFechaInicio"></td>
+                                        <th>Fecha Inicio Inspección:</th>
+                                        <td id="detalleProyectoFechaInicioIns"></td>
                                     </tr>
                                     <tr>
-                                        <th>Finalización:</th>
-                                        <td id="detalleProyectoFechaFin"></td>
+                                        <th>Fecha Fin Inspección:</th>
+                                        <td id="detalleProyectoFechaFinIns"></td>
                                     </tr>
                                     <tr>
-                                        <th>Asignación:</th>
-                                        <td id="detalleProyectoFechaAsignacion"></td>
+                                        <th>Fecha Radicación:</th>
+                                        <td id="detalleProyectoFechaRadicacion"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fecha Revisión Documental:</th>
+                                        <td id="detalleProyectoFechaRevDocumental"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fecha PJ a WC:</th>
+                                        <td id="detalleProyectoFechaPjWc"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fecha INS:</th>
+                                        <td id="detalleProyectoFechaIns"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fecha Análisis INS:</th>
+                                        <td id="detalleProyectoFechaAnalisisIns"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fecha WC a PJ:</th>
+                                        <td id="detalleProyectoFechaWcPj"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fecha JD a PJ:</th>
+                                        <td id="detalleProyectoFechaJdPj"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fecha Notificación PRST:</th>
+                                        <td id="detalleProyectoFechaNotiPrst"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Diferencia Radicación vs PJ-WC:</th>
+                                        <td id="detalleProyectoDifRadVsPjWc"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Diferencia Radicación WC vs INS:</th>
+                                        <td id="detalleProyectoDifRadWcVsIns"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Antigüedad (días):</th>
+                                        <td id="detalleProyectoAntiguedadDias"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Antigüedad en Proceso:</th>
+                                        <td id="detalleProyectoAntiguedadProceso"></td>
                                     </tr>
                                 </table>
                             </div>
@@ -907,21 +955,21 @@
 
                         <div class="card mb-3">
                             <div class="card-header bg-light">
-                                <h6 class="mb-0">Estado Actual</h6>
+                                <h6 class="mb-0">Postes</h6>
                             </div>
                             <div class="card-body">
                                 <table class="table table-sm table-borderless">
                                     <tr>
-                                        <th class="w-40">Estado:</th>
-                                        <td id="detalleProyectoEstado"></td>
+                                        <th class="w-40">N° Total Postes:</th>
+                                        <td id="detalleProyectoTotalPostes"></td>
                                     </tr>
                                     <tr>
-                                        <th>Asignado a:</th>
-                                        <td id="detalleProyectoAsignadoA"></td>
+                                        <th>Total Postes Iniciales:</th>
+                                        <td id="detalleProyectoTotalPostesInicial"></td>
                                     </tr>
                                     <tr>
-                                        <th>Observaciones:</th>
-                                        <td id="detalleProyectoObservaciones"></td>
+                                        <th>Total Postes Finales:</th>
+                                        <td id="detalleProyectoTotalPostesFinal"></td>
                                     </tr>
                                 </table>
                             </div>
@@ -932,7 +980,7 @@
                 <!-- Sección de distribución de postes por altura -->
                 <div class="card mb-3">
                     <div class="card-header bg-light">
-                        <h6 class="mb-0">Distribución de Postes por Altura</h6>
+                        <h6 class="mb-0">Distribución de Postes por Altura (Inicial)</h6>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -947,19 +995,17 @@
                                             <th>12m</th>
                                             <th>14m</th>
                                             <th>16m</th>
-                                            <th>Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td id="detalleProyectoAltura8">0</td>
-                                            <td id="detalleProyectoAltura9">0</td>
-                                            <td id="detalleProyectoAltura10">0</td>
-                                            <td id="detalleProyectoAltura11">0</td>
-                                            <td id="detalleProyectoAltura12">0</td>
-                                            <td id="detalleProyectoAltura14">0</td>
-                                            <td id="detalleProyectoAltura16">0</td>
-                                            <td id="detalleProyectoTotalPostes">0</td>
+                                            <td id="detalleProyectoAltura8"></td>
+                                            <td id="detalleProyectoAltura9"></td>
+                                            <td id="detalleProyectoAltura10"></td>
+                                            <td id="detalleProyectoAltura11"></td>
+                                            <td id="detalleProyectoAltura12"></td>
+                                            <td id="detalleProyectoAltura14"></td>
+                                            <td id="detalleProyectoAltura16"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -968,31 +1014,52 @@
                     </div>
                 </div>
 
-                <!-- Sección de documentos -->
-                <div class="card">
+                <!-- Sección de distribución de postes finales por altura -->
+                <div class="card mb-3">
                     <div class="card-header bg-light">
-                        <h6 class="mb-0">Documentación</h6>
+                        <h6 class="mb-0">Distribución de Postes por Altura (Final)</h6>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Tipo</th>
-                                        <th>Documento</th>
-                                        <th>Estado</th>
-                                        <th>Última Actualización</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaDocumentosDetalle">
-                                    <!-- Se llenará dinámicamente -->
-                                    <tr>
-                                        <td colspan="5" class="text-center">No hay documentos registrados</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>8m</th>
+                                            <th>9m</th>
+                                            <th>10m</th>
+                                            <th>11m</th>
+                                            <th>12m</th>
+                                            <th>14m</th>
+                                            <th>16m</th>
+                                            <th>18m</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td id="detalleProyectoAlturaFinal8"></td>
+                                            <td id="detalleProyectoAlturaFinal9"></td>
+                                            <td id="detalleProyectoAlturaFinal10"></td>
+                                            <td id="detalleProyectoAlturaFinal11"></td>
+                                            <td id="detalleProyectoAlturaFinal12"></td>
+                                            <td id="detalleProyectoAlturaFinal14"></td>
+                                            <td id="detalleProyectoAlturaFinal16"></td>
+                                            <td id="detalleProyectoAlturaFinal18"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Sección de observaciones -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Observaciones</h6>
+                    </div>
+                    <div class="card-body">
+                        <p id="detalleProyectoObservaciones" class="mb-0"></p>
                     </div>
                 </div>
             </div>
@@ -1006,6 +1073,39 @@
     </div>
 </div>
 
+<div class="modal fade" id="assignProjectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">Asignar Proyecto a Brigada</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="assign-project-id">
+          
+          <div class="mb-3">
+            <h6>Detalles del Proyecto</h6>
+            <p><strong>Nombre:</strong> <span id="assign-project-name"></span></p>
+            <p><strong>OT AIR-E:</strong> <span id="assign-project-ot"></span></p>
+            <p><strong>Ubicación:</strong> <span id="assign-project-location"></span></p>
+            <p><strong>Postes:</strong> <span id="assign-project-poles"></span></p>
+            <p><strong>PRST:</strong> <span id="assign-project-prst"></span></p>
+          </div>
+          
+          <div class="mb-3">
+            <label for="assign-brigade-select" class="form-label">Seleccione Brigada</label>
+            <select class="form-select" id="assign-brigade-select">
+              <option value="">Seleccione una brigada</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="assignProject()">Asignar Proyecto</button>
+        </div>
+      </div>
+    </div>
+  </div>
     <!-- Modal de Perfil -->
 <!-- Modal de Perfil -->
 <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
@@ -1265,16 +1365,16 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS Bundle with Popper -->
+<!-- Bootstrap JS Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Leaflet JS para mapas -->
+<!-- Librerías externas -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.hexbin@1.0.0/leaflet-hexbin.min.js"></script>
-
-<!-- Tus scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="../Js/storage.js"></script>
-<script src="../Js/admin.js"></script>
+
+<!-- Lógica de tu app (modular) -->
+<script type="module" src="../Js/main.js"></script>
+
 </body>
 </html>

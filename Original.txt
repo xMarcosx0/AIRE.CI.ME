@@ -1,0 +1,230 @@
+<div class="modal fade" id="modalDetalleProyecto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Detalles del Proyecto <span id="detalleProyectoIdBadge" class="badge bg-secondary ms-2"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Columna izquierda - Información básica -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Información Básica</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th class="w-40">ID:</th>
+                                        <td id="detalleProyectoId"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>OT AIR-E:</th>
+                                        <td id="detalleProyectoOtAirE"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>OT PRST:</th>
+                                        <td id="detalleProyectoOtPrst"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Nombre:</th>
+                                        <td id="detalleProyectoNombre"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>PRST:</th>
+                                        <td id="detalleProyectoPrst"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Tipo Solicitud:</th>
+                                        <td id="detalleProyectoTipoSolicitud"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Ubicación</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th class="w-40">Departamento:</th>
+                                        <td id="detalleProyectoDepartamento"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Municipio:</th>
+                                        <td id="detalleProyectoMunicipio"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Barrio(s):</th>
+                                        <td id="detalleProyectoBarrios"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Dirección Inicial:</th>
+                                        <td id="detalleProyectoDireccionInicial"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Dirección Final:</th>
+                                        <td id="detalleProyectoDireccionFinal"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Punto Conexión:</th>
+                                        <td id="detalleProyectoPuntoConexion"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna derecha - Detalles técnicos y estado -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Detalles Técnicos</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th class="w-40">N° Postes:</th>
+                                        <td id="detalleProyectoNumPostes"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Altura Postes:</th>
+                                        <td id="detalleProyectoAlturaPostes"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Estado Inicial:</th>
+                                        <td id="detalleProyectoEstadoInicial"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Fechas Clave</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th class="w-40">Creación:</th>
+                                        <td id="detalleProyectoFechaCreacion"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Inicio:</th>
+                                        <td id="detalleProyectoFechaInicio"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Finalización:</th>
+                                        <td id="detalleProyectoFechaFin"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Asignación:</th>
+                                        <td id="detalleProyectoFechaAsignacion"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Estado Actual</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th class="w-40">Estado:</th>
+                                        <td id="detalleProyectoEstado"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Asignado a:</th>
+                                        <td id="detalleProyectoAsignadoA"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Observaciones:</th>
+                                        <td id="detalleProyectoObservaciones"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección de distribución de postes por altura -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Distribución de Postes por Altura</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>8m</th>
+                                            <th>9m</th>
+                                            <th>10m</th>
+                                            <th>11m</th>
+                                            <th>12m</th>
+                                            <th>14m</th>
+                                            <th>16m</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td id="detalleProyectoAltura8">0</td>
+                                            <td id="detalleProyectoAltura9">0</td>
+                                            <td id="detalleProyectoAltura10">0</td>
+                                            <td id="detalleProyectoAltura11">0</td>
+                                            <td id="detalleProyectoAltura12">0</td>
+                                            <td id="detalleProyectoAltura14">0</td>
+                                            <td id="detalleProyectoAltura16">0</td>
+                                            <td id="detalleProyectoTotalPostes">0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección de documentos -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Documentación</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Documento</th>
+                                        <th>Estado</th>
+                                        <th>Última Actualización</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaDocumentosDetalle">
+                                    <!-- Se llenará dinámicamente -->
+                                    <tr>
+                                        <td colspan="5" class="text-center">No hay documentos registrados</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnImprimirDetalle">
+                    <i class="fas fa-print me-1"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
