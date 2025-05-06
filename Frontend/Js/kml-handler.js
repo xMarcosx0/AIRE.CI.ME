@@ -33,13 +33,13 @@ const KMLHandler = (() => {
 
   // Función para procesar un archivo KMZ (ZIP que contiene un KML)
   async function processKMZ(file) {
-    console.log(`Procesando archivo KMZ: ${file.name}`)
-
+    console.log(`Procesando archivo KMZ: ${file.name}`);
+  
     try {
-      // Ensure JSZip is available
+      // Verificar si JSZip está disponible
       if (typeof JSZip === "undefined") {
-        console.error("JSZip no está disponible")
-        throw new Error("JSZip library is required to process KMZ files. Please include it in your project.")
+        console.error("JSZip no está disponible");
+        throw new Error("JSZip library is required to process KMZ files. Please include it in your project.");
       }
 
       console.log("Cargando archivo KMZ con JSZip...")
@@ -90,333 +90,293 @@ const KMLHandler = (() => {
   // Función mejorada para procesar KML con mejor extracción de datos
   function procesarKML(kmlContent) {
     try {
-      // Crear un parser de XML
-      const parser = new DOMParser()
-      const xmlDoc = parser.parseFromString(kmlContent, "text/xml")
+        // Crear un parser de XML
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(kmlContent, "text/xml");
 
-      // Verificar si hay errores en el XML
-      const parserError = xmlDoc.querySelector("parsererror")
-      if (parserError) {
-        throw new Error("Error al parsear el XML: " + parserError.textContent)
-      }
-
-      // Extraer puntos (Placemarks)
-      const puntos = []
-      const placemarks = xmlDoc.querySelectorAll("Placemark")
-
-      placemarks.forEach((placemark) => {
-        const nombre = placemark.querySelector("name")?.textContent || ""
-        const descripcion = placemark.querySelector("description")?.textContent || ""
-        const styleUrl = placemark.querySelector("styleUrl")?.textContent || ""
-
-        // Extraer información de estilo para identificar mejor los tipos de puntos
-        const style = styleUrl ? styleUrl.replace("#", "") : ""
-
-        // Extraer información de carpeta para mejor categorización
-        let carpeta = ""
-        let currentElement = placemark
-        while (currentElement.parentElement) {
-          if (currentElement.parentElement.tagName === "Folder") {
-            const folderName = currentElement.parentElement.querySelector("name")?.textContent || ""
-            if (folderName) {
-              carpeta = folderName
-              break
-            }
-          }
-          currentElement = currentElement.parentElement
+        // Verificar si hay errores en el XML
+        const parserError = xmlDoc.querySelector("parsererror");
+        if (parserError) {
+            throw new Error("Error al parsear el XML: " + parserError.textContent);
         }
 
-        // Extraer datos extendidos si existen
-        const extendedData = {}
-        const dataElements = placemark.querySelectorAll("ExtendedData Data")
-        dataElements.forEach((dataElement) => {
-          const name = dataElement.getAttribute("name")
-          const value = dataElement.querySelector("value")?.textContent || ""
-          if (name) {
-            extendedData[name] = value
-          }
-        })
-
-        // Buscar coordenadas en Point
-        const point = placemark.querySelector("Point")
-        if (point) {
-          const coordsText = point.querySelector("coordinates")?.textContent
-          if (coordsText) {
-            const coords = coordsText.trim().split(",")
-            if (coords.length >= 2) {
-              puntos.push({
-                nombre: nombre,
-                descripcion: descripcion,
-                lng: Number.parseFloat(coords[0]),
-                lat: Number.parseFloat(coords[1]),
-                lon: Number.parseFloat(coords[0]), // Añadir también como 'lon' para compatibilidad
-                alt: coords.length > 2 ? Number.parseFloat(coords[2]) : 0,
-                carpeta: carpeta,
-                style: style,
-                extendedData: extendedData,
-                tipo: determinarTipoPunto(nombre, descripcion, carpeta, style, extendedData),
-              })
-            }
-          }
+        // Validar estructura básica del KML
+        if (!xmlDoc.querySelector("kml")) {
+            throw new Error("El archivo no es un KML válido");
         }
 
-        // Buscar coordenadas en LineString (para rutas)
-        const lineString = placemark.querySelector("LineString")
-        if (lineString) {
-          const coordsText = lineString.querySelector("coordinates")?.textContent
-          if (coordsText) {
-            const coordsArray = coordsText.trim().split(/\s+/)
-            const puntosRuta = coordsArray
-              .map((coordStr) => {
-                const coords = coordStr.split(",")
+        // Estructura de resultado
+        const resultado = {
+            puntos: [],
+            lineas: [],
+            poligonos: [],
+            estilos: {}
+        };
+
+        // Extraer Placemarks
+        const placemarks = xmlDoc.querySelectorAll("Placemark");
+
+        placemarks.forEach((placemark) => {
+            // Extraer información básica
+            const nombre = placemark.querySelector("name")?.textContent || "";
+            const descripcion = placemark.querySelector("description")?.textContent || "";
+            const styleUrl = placemark.querySelector("styleUrl")?.textContent || "";
+            const style = styleUrl ? styleUrl.replace("#", "") : "";
+
+            // Extraer información de carpeta
+            let carpeta = "";
+            let currentElement = placemark;
+            while (currentElement.parentElement) {
+                if (currentElement.parentElement.tagName === "Folder") {
+                    const folderName = currentElement.parentElement.querySelector("name")?.textContent || "";
+                    if (folderName) {
+                        carpeta = folderName;
+                        break;
+                    }
+                }
+                currentElement = currentElement.parentElement;
+            }
+
+            // Extraer datos extendidos
+            const extendedData = {};
+            const dataElements = placemark.querySelectorAll("ExtendedData Data");
+            dataElements.forEach((dataElement) => {
+                const name = dataElement.getAttribute("name");
+                const value = dataElement.querySelector("value")?.textContent || "";
+                if (name) {
+                    extendedData[name] = value;
+                }
+            });
+
+            // Procesar Point (Puntos)
+            const point = placemark.querySelector("Point");
+            // En la función procesarKML, modifica la parte de puntos:
+            if (point) {
+              const coordsText = point.querySelector("coordinates")?.textContent;
+              if (coordsText) {
+                const coords = coordsText.trim().split(",");
                 if (coords.length >= 2) {
-                  return {
-                    lng: Number.parseFloat(coords[0]),
-                    lat: Number.parseFloat(coords[1]),
-                    lon: Number.parseFloat(coords[0]), // Añadir también como 'lon' para compatibilidad
-                    alt: coords.length > 2 ? Number.parseFloat(coords[2]) : 0,
+                    const lng = parseFloat(coords[0]);
+                    const lat = parseFloat(coords[1]);
+                    
+                    // Validar que sean coordenadas geográficas plausibles
+                    if (!isNaN(lng) && !isNaN(lat) && 
+                        lat >= -90 && lat <= 90 && 
+                        lng >= -180 && lng <= 180) {
+                        // Coordenadas válidas
+                        resultado.puntos.push({
+                              nombre: nombre,
+                              descripcion: descripcion,
+                              lng: lng,
+                              lat: lat,
+                              lon: lng,
+                              alt: coords.length > 2 ? parseFloat(coords[2]) : 0,
+                              carpeta: carpeta,
+                              style: style,
+                              extendedData: extendedData,
+                              tipo: determinarTipoPunto(nombre, descripcion, carpeta, style, extendedData),
+                          });
+                      }
                   }
-                }
-                return null
-              })
-              .filter((p) => p !== null)
-
-            if (puntosRuta.length > 0) {
-              // Añadir la línea
-              if (!this.lineas) this.lineas = []
-              this.lineas.push({
-                nombre: nombre,
-                descripcion: descripcion,
-                puntos: puntosRuta,
-                carpeta: carpeta,
-                style: style,
-                extendedData: extendedData,
-                tipo: "linea",
-              })
-            }
-          }
-        }
-
-        // Buscar polígonos
-        const polygon = placemark.querySelector("Polygon")
-        if (polygon) {
-          const outerBoundary = polygon.querySelector("outerBoundaryIs LinearRing coordinates")
-          if (outerBoundary) {
-            const coordsText = outerBoundary.textContent
-            const coordsArray = coordsText.trim().split(/\s+/)
-            const puntosPoligono = coordsArray
-              .map((coordStr) => {
-                const coords = coordStr.split(",")
-                if (coords.length >= 2) {
-                  return {
-                    lng: Number.parseFloat(coords[0]),
-                    lat: Number.parseFloat(coords[1]),
-                    lon: Number.parseFloat(coords[0]),
-                    alt: coords.length > 2 ? Number.parseFloat(coords[2]) : 0,
-                  }
-                }
-                return null
-              })
-              .filter((p) => p !== null)
-
-            if (puntosPoligono.length > 0) {
-              // Añadir el polígono
-              if (!this.poligonos) this.poligonos = []
-              this.poligonos.push({
-                nombre: nombre,
-                descripcion: descripcion,
-                puntos: puntosPoligono,
-                carpeta: carpeta,
-                style: style,
-                extendedData: extendedData,
-                tipo: "poligono",
-              })
-            }
-          }
-        }
-      })
-
-      // Extraer rutas (LineString) que no estén dentro de Placemarks
-      const lineas = []
-      const lineStrings = xmlDoc.querySelectorAll("LineString")
-
-      lineStrings.forEach((lineString) => {
-        const placemark = lineString.closest("Placemark")
-        if (!placemark) return // Skip if already processed within a Placemark
-
-        const nombre = placemark?.querySelector("name")?.textContent || ""
-        const descripcion = placemark?.querySelector("description")?.textContent || ""
-        const styleUrl = placemark?.querySelector("styleUrl")?.textContent || ""
-        const style = styleUrl ? styleUrl.replace("#", "") : ""
-
-        // Extract folder information
-        let carpeta = ""
-        let currentElement = placemark
-        while (currentElement && currentElement.parentElement) {
-          if (currentElement.parentElement.tagName === "Folder") {
-            const folderName = currentElement.parentElement.querySelector("name")?.textContent || ""
-            if (folderName) {
-              carpeta = folderName
-              break
-            }
-          }
-          currentElement = currentElement.parentElement
-        }
-
-        const coordsText = lineString.querySelector("coordinates")?.textContent
-        if (coordsText) {
-          const coordsArray = coordsText.trim().split(/\s+/)
-          const puntosRuta = coordsArray
-            .map((coordStr) => {
-              const coords = coordStr.split(",")
-              if (coords.length >= 2) {
-                return {
-                  lng: Number.parseFloat(coords[0]),
-                  lat: Number.parseFloat(coords[1]),
-                  lon: Number.parseFloat(coords[0]),
-                  alt: coords.length > 2 ? Number.parseFloat(coords[2]) : 0,
-                }
               }
-              return null
-            })
-            .filter((p) => p !== null)
+            }
 
-          if (puntosRuta.length > 0) {
-            lineas.push({
-              nombre: nombre,
-              descripcion: descripcion,
-              puntos: puntosRuta,
-              carpeta: carpeta,
-              style: style,
-              tipo: "linea",
-            })
-          }
-        }
-      })
+            // Procesar LineString (Líneas)
+            const lineString = placemark.querySelector("LineString");
+            if (lineString) {
+                const coordsText = lineString.querySelector("coordinates")?.textContent;
+                if (coordsText) {
+                    const coordsArray = coordsText.trim().split(/\s+/);
+                    const puntosRuta = coordsArray.map((coordStr) => {
+                        const coords = coordStr.split(",");
+                        if (coords.length >= 2) {
+                            return {
+                                lng: parseFloat(coords[0]),
+                                lat: parseFloat(coords[1]),
+                                lon: parseFloat(coords[0]),
+                                alt: coords.length > 2 ? parseFloat(coords[2]) : 0,
+                            };
+                        }
+                        return null;
+                    }).filter(p => p !== null);
 
-      // Procesar estilos para mejor visualización
-      const estilos = {}
-      const styles = xmlDoc.querySelectorAll("Style")
-      styles.forEach((style) => {
-        const id = style.getAttribute("id")
-        if (id) {
-          const iconStyle = style.querySelector("IconStyle")
-          const lineStyle = style.querySelector("LineStyle")
-          const polyStyle = style.querySelector("PolyStyle")
-
-          estilos[id] = {
-            icon: iconStyle
-              ? {
-                  scale: iconStyle.querySelector("scale")?.textContent || "1.0",
-                  href: iconStyle.querySelector("Icon href")?.textContent || "",
+                    if (puntosRuta.length > 0) {
+                        resultado.lineas.push({
+                            nombre: nombre,
+                            descripcion: descripcion,
+                            puntos: puntosRuta,
+                            carpeta: carpeta,
+                            style: style,
+                            extendedData: extendedData,
+                            tipo: "linea",
+                        });
+                    }
                 }
-              : null,
-            line: lineStyle
-              ? {
-                  color: lineStyle.querySelector("color")?.textContent || "ffffffff",
-                  width: lineStyle.querySelector("width")?.textContent || "1.0",
-                }
-              : null,
-            poly: polyStyle
-              ? {
-                  color: polyStyle.querySelector("color")?.textContent || "ffffffff",
-                  fill: polyStyle.querySelector("fill")?.textContent !== "0",
-                  outline: polyStyle.querySelector("outline")?.textContent !== "0",
-                }
-              : null,
-          }
-        }
-      })
+            }
 
-      return {
-        puntos: puntos,
-        lineas: lineas,
-        poligonos: this.poligonos || [],
-        estilos: estilos,
-      }
+            // Procesar Polygon (Polígonos)
+            const polygon = placemark.querySelector("Polygon");
+            if (polygon) {
+                const outerBoundary = polygon.querySelector("outerBoundaryIs LinearRing coordinates");
+                if (outerBoundary) {
+                    const coordsText = outerBoundary.textContent;
+                    const coordsArray = coordsText.trim().split(/\s+/);
+                    const puntosPoligono = coordsArray.map((coordStr) => {
+                        const coords = coordStr.split(",");
+                        if (coords.length >= 2) {
+                            return {
+                                lng: parseFloat(coords[0]),
+                                lat: parseFloat(coords[1]),
+                                lon: parseFloat(coords[0]),
+                                alt: coords.length > 2 ? parseFloat(coords[2]) : 0,
+                            };
+                        }
+                        return null;
+                    }).filter(p => p !== null);
+
+                    if (puntosPoligono.length > 0) {
+                        resultado.poligonos.push({
+                            nombre: nombre,
+                            descripcion: descripcion,
+                            puntos: puntosPoligono,
+                            carpeta: carpeta,
+                            style: style,
+                            extendedData: extendedData,
+                            tipo: "poligono",
+                        });
+                    }
+                }
+            }
+        });
+
+        // Procesar estilos
+        const styles = xmlDoc.querySelectorAll("Style");
+        styles.forEach((style) => {
+            const id = style.getAttribute("id");
+            if (id) {
+                const iconStyle = style.querySelector("IconStyle");
+                const lineStyle = style.querySelector("LineStyle");
+                const polyStyle = style.querySelector("PolyStyle");
+
+                resultado.estilos[id] = {
+                    icon: iconStyle ? {
+                        scale: iconStyle.querySelector("scale")?.textContent || "1.0",
+                        href: iconStyle.querySelector("Icon href")?.textContent || "",
+                    } : null,
+                    line: lineStyle ? {
+                        color: lineStyle.querySelector("color")?.textContent || "ffffffff",
+                        width: lineStyle.querySelector("width")?.textContent || "1.0",
+                    } : null,
+                    poly: polyStyle ? {
+                        color: polyStyle.querySelector("color")?.textContent || "ffffffff",
+                        fill: polyStyle.querySelector("fill")?.textContent !== "0",
+                        outline: polyStyle.querySelector("outline")?.textContent !== "0",
+                    } : null,
+                };
+            }
+        });
+
+        // Procesar LineStrings que no estén dentro de Placemarks
+        const lineStrings = xmlDoc.querySelectorAll("LineString:not(Placemark LineString)");
+        lineStrings.forEach((lineString) => {
+            const coordsText = lineString.querySelector("coordinates")?.textContent;
+            if (coordsText) {
+                const coordsArray = coordsText.trim().split(/\s+/);
+                const puntosRuta = coordsArray.map((coordStr) => {
+                    const coords = coordStr.split(",");
+                    if (coords.length >= 2) {
+                        return {
+                            lng: parseFloat(coords[0]),
+                            lat: parseFloat(coords[1]),
+                            lon: parseFloat(coords[0]),
+                            alt: coords.length > 2 ? parseFloat(coords[2]) : 0,
+                        };
+                    }
+                    return null;
+                }).filter(p => p !== null);
+
+                if (puntosRuta.length > 0) {
+                    resultado.lineas.push({
+                        nombre: "Línea sin nombre",
+                        descripcion: "",
+                        puntos: puntosRuta,
+                        carpeta: "",
+                        style: "",
+                        tipo: "linea",
+                    });
+                }
+            }
+        });
+
+        return resultado;
     } catch (error) {
-      console.error("Error al procesar KML:", error)
-      throw error
+        console.error("Error al procesar KML:", error);
+        throw new Error("Error al procesar el archivo KML: " + error.message);
     }
-  }
+}
 
   // Función mejorada para determinar el tipo de punto
-  function determinarTipoPunto(nombre, descripcion, carpeta, style, extendedData) {
-    // Normalizar textos para búsqueda
-    const nombreLower = (nombre || "").toLowerCase()
-    const descripcionLower = (descripcion || "").toLowerCase()
-    const carpetaLower = (carpeta || "").toLowerCase()
-
-    // Verificar carpeta específica primero
-    if (carpetaLower === "postes" || carpetaLower.includes("poste")) {
-      return "poste"
-    }
-
-    // Patrones para identificar postes
-    const patronesPoste = [
+  // Función mejorada para determinar el tipo de punto
+function determinarTipoPunto(nombre, descripcion, carpeta, style, extendedData) {
+  // Normalizar textos
+  const nombreLower = nombre ? nombre.toLowerCase() : '';
+  const descripcionLower = descripcion ? descripcion.toLowerCase() : '';
+  const carpetaLower = carpeta ? carpeta.toLowerCase() : '';
+  const textoCompleto = `${nombreLower} ${descripcionLower} ${carpetaLower} ${JSON.stringify(extendedData)}`.toLowerCase();
+  
+  // Lista de patrones para identificar postes
+  const patronesPoste = [
       /poste/i,
-      /^p\d+$/i,
-      /^poste\s*\d+$/i,
-      /^\d+$/,
+      /p\d+/i,       // P1, P2, etc.
+      /\b\d+\b/,     // Números solos
       /apoyo/i,
       /estructura/i,
       /torre/i,
       /columna/i,
       /soporte/i,
-    ]
-
-    // Verificar patrones en nombre y descripción
-    for (const patron of patronesPoste) {
-      if (patron.test(nombreLower) || patron.test(descripcionLower)) {
-        return "poste"
-      }
-    }
-
-    // Verificar datos extendidos
-    if (extendedData) {
-      const valores = Object.values(extendedData).map((v) => String(v).toLowerCase())
-      for (const valor of valores) {
-        for (const patron of patronesPoste) {
-          if (patron.test(valor)) {
-            return "poste"
-          }
-        }
-      }
-    }
-
-    // Verificar si es un cliente
-    if (
-      nombreLower.includes("cliente") ||
-      descripcionLower.includes("cliente") ||
-      nombreLower.includes("client") ||
-      descripcionLower.includes("client")
-    ) {
-      return "cliente"
-    }
-
-    // Verificar si es un nodo
-    if (
-      nombreLower.includes("nodo") ||
-      descripcionLower.includes("node") ||
-      nombreLower.includes("node") ||
-      descripcionLower.includes("node")
-    ) {
-      return "nodo"
-    }
-
-    // Verificar si es un punto de referencia
-    if (
-      nombreLower.includes("referencia") ||
-      descripcionLower.includes("referencia") ||
-      nombreLower.includes("landmark") ||
-      descripcionLower.includes("landmark")
-    ) {
-      return "referencia"
-    }
-
-    // Por defecto, considerar como punto genérico
-    return "punto"
+      /pole/i,
+      /post/i
+  ];
+  
+  // Verificar si coincide con algún patrón de poste
+  if (patronesPoste.some(patron => 
+      patron.test(nombreLower) || 
+      patron.test(descripcionLower) || 
+      patron.test(carpetaLower)
+  )) {
+      return "poste";
   }
+
+  // Verificar datos extendidos
+  if (extendedData) {
+      const valores = Object.values(extendedData).map((v) => String(v).toLowerCase());
+      for (const valor of valores) {
+          for (const patron of patronesPoste) {
+              if (patron.test(valor)) {
+                  return "poste";
+              }
+          }
+      }
+  }
+
+  // Verificar si es un cliente
+  if (textoCompleto.includes("cliente") || textoCompleto.includes("client")) {
+      return "cliente";
+  }
+
+  // Verificar si es un nodo
+  if (textoCompleto.includes("nodo") || textoCompleto.includes("node")) {
+      return "nodo";
+  }
+
+  // Verificar si es un punto de referencia
+  if (textoCompleto.includes("referencia") || textoCompleto.includes("landmark")) {
+      return "referencia";
+  }
+
+  // Por defecto, considerar como punto genérico
+  return "punto";
+}
 
   // Exponer las funciones públicas
   return {
@@ -430,3 +390,5 @@ const KMLHandler = (() => {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = KMLHandler
 }
+
+export default KMLHandler;

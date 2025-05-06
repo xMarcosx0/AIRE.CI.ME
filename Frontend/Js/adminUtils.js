@@ -15,9 +15,24 @@ export function initializeComponents() {
 
   if (deptSelect && munSelect) {
     const municipios = {
-      "Atlántico": ["Barranquilla", "Soledad", "Malambo", "Puerto Colombia"],
-      "La Guajira": ["Riohacha", "Maicao", "Uribia", "Fonseca"],
-      "Magdalena": ["Santa Marta", "Ciénaga", "Fundación", "Aracataca"]
+      "Atlántico": [
+        "Barranquilla", "Baranoa", "Campo de la Cruz", "Candelaria", "Galapa",
+        "Juan de Acosta", "Luruaco", "Malambo", "Manati", "Palmar de varela",
+        "Piojo", "Polonuevo", "Ponedera", "Puerto Colombia", "Repelon",
+        "Sabanagrande", "Sabanalarga", "Santa Lucia", "Santo Tomas", "Soledad",
+        "Suan", "Tubara", "Usiacuri"
+      ],
+      "La Guajira": [
+        "Riohacha", "Albania", "Barrancas", "Dibulla", "Distraccion",
+        "El Molino", "Fonseca", "Hatonuevo", "La Jagua del Pilar", "Maicao",
+        "Manaure", "San Juan del Cesar", "Uribia", "Urumita", "Villanueva"
+      ],
+      "Magdalena": [
+        "Santa Marta", "Aracataca", "Cerro de San Antonio", "Chibolo", "Cienaga",
+        "Concordia", "El Piñon", "El Reten", "Fundacion", "Pedraza",
+        "Pivijay", "Plato", "Puebloviejo", "Remolino", "Salamina",
+        "Sitionuevo", "Tenerife", "Zapayan", "Zona Bananera"
+      ]
     };
 
     deptSelect.addEventListener("change", () => {
@@ -34,14 +49,37 @@ export function initializeComponents() {
     });
   }
 
+  document.getElementById("project-prst")?.addEventListener("change", function() {
+    const prstNombre = this.value;
+    if (prstNombre) {
+      document.getElementById("project-ot").value = generateOTAirE(prstNombre);
+    }
+  });
+
   console.log("Componentes inicializados");
 }
 
-export function generateOTAirE() {
+export function generateOTAirE(prstNombre) {
   const counter = Storage.getCounter();
-  const ot = `OT-${++counter.projects}`;
-  Storage.saveCounter(counter);
-  return ot;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  
+  // Obtener el nombre corto del PRST
+  const prstShortName = Storage.getPRSTShortName(prstNombre).replace(/\s+/g, '_');
+  
+  // Contar proyectos existentes de este PRST en el mes actual
+  const projects = Storage.getProjects();
+  const currentMonthProjects = projects.filter(p => {
+    const projectDate = new Date(p.fechaCreacion);
+    return p.prstNombre === prstNombre && 
+           projectDate.getFullYear() === year && 
+           projectDate.getMonth() === now.getMonth();
+  });
+  
+  const consecutivo = currentMonthProjects.length + 1;
+  
+  return `${prstShortName}_${year}_${month}.${consecutivo}`;
 }
 
 export function getPoleHeightsDistribution() {

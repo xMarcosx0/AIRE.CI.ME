@@ -4,6 +4,9 @@ import { initializeComponents } from './adminUtils.js';
 import { loadUsersTable } from './adminUsers.js';
 import { loadProjectsTable } from './adminProjects.js';
 import { loadCharts } from './adminCharts.js';
+import { initMap, loadProjectsOnMap } from './adminMap.js';
+import KMLHandler from './kml-handler.js';
+
 
 document.addEventListener("DOMContentLoaded", () => {
   try {
@@ -23,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadUsersTable();
     loadProjectsTable();
     loadCharts(Storage.getProjects());
+    initMap();
 
   } catch (e) {
     console.error("Error en inicialización:", e);

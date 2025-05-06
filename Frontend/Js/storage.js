@@ -557,10 +557,14 @@ const Storage = {
   },
 
   // Guardar proyecto
-  // Dentro del objeto Storage, modificar el método saveProject:
-  // Modificar el método saveProject para usar el nuevo ID
   saveProject: function (project) {
     const projects = this.getProjects();
+    
+    if (!project.id) {
+      // Generar ID numérica secuencial
+    const maxId = projects.reduce((max, p) => Math.max(max, parseInt(p.id) || 0), 0);
+    project.id = (maxId + 1).toString();
+    }
     const isNewProject = !project.id;
     let oldStatus = null;
     let oldProject = null;
